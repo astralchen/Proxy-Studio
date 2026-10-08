@@ -4,6 +4,10 @@
 
 产品范围、功能规则与验收标准见 [产品需求文档](REQUIREMENTS.md)；开发协作遵循 [AGENTS.md](AGENTS.md)，实际验证状态见 [VALIDATION.md](VALIDATION.md)。
 
+## 界面预览
+
+![Proxy Studio 宽屏分栏界面：左侧导入 SOCKS 链接，右侧展示待导入提示](Preview/duo-split-view.png)
+
 ## 打开与运行
 
 1. 使用 **Xcode 27.1 或更新版本**打开 `ProxyStudio.xcodeproj`。iPhone Duo 的完整屏幕适配依赖 iOS 27.1 SDK；工程最低运行版本仍为 iOS 26.0。
