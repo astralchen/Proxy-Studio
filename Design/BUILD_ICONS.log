@@ -1,0 +1,84 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project outputs/ProxyStudio/ProxyStudio.xcodeproj -scheme ProxyStudio -configuration Debug -sdk iphonesimulator -destination "generic/platform=iOS Simulator" -derivedDataPath work/DerivedData CODE_SIGNING_ALLOWED=NO build
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+    SDKROOT = iphonesimulator27.1
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'ProxyStudio' in project 'ProxyStudio' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.1.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /path/to/ProxyStudioBuild/outputs/ProxyStudio/ProxyStudio/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 0cc5f12f6f22c61d266ea2dacee45d46
+Build description path: /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/XCBuildData/0cc5f12f6f22c61d266ea2dacee45d46.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.1.sdk /path/to/ProxyStudioBuild/work/DerivedData/SDKStatCaches.noindex/iphonesimulator27.1-24A94403-e829b21a6f8c9b70876ba0858053c04435d3147121984ba087c28d913653d626.sdkstatcache
+    cd /path/to/ProxyStudioBuild/outputs/ProxyStudio/ProxyStudio.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.1.sdk -o /path/to/ProxyStudioBuild/work/DerivedData/SDKStatCaches.noindex/iphonesimulator27.1-24A94403-e829b21a6f8c9b70876ba0858053c04435d3147121984ba087c28d913653d626.sdkstatcache
+
+GenerateAssetSymbols /path/to/ProxyStudioBuild/outputs/ProxyStudio/ProxyStudio/Assets.xcassets (in target 'ProxyStudio' from project 'ProxyStudio')
+    cd /path/to/ProxyStudioBuild/outputs/ProxyStudio
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /path/to/ProxyStudioBuild/outputs/ProxyStudio/ProxyStudio/Assets.xcassets --compile /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app --output-format human-readable-text --notices --warnings --export-dependency-info /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_dependencies --output-partial-info-plist /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region zh-Hans --target-device iphone --target-device ipad --minimum-deployment-target 26.0 --platform iphonesimulator --bundle-identifier com.example.ProxyStudio --generate-swift-asset-symbol-extensions NO --generate-swift-asset-symbols /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/DerivedSources/GeneratedAssetSymbols.h
+/path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CompileAssetCatalogVariant thinned /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app /path/to/ProxyStudioBuild/outputs/ProxyStudio/ProxyStudio/Assets.xcassets (in target 'ProxyStudio' from project 'ProxyStudio')
+    cd /path/to/ProxyStudioBuild/outputs/ProxyStudio
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /path/to/ProxyStudioBuild/outputs/ProxyStudio/ProxyStudio/Assets.xcassets --compile /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_dependencies_thinned --output-partial-info-plist /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region zh-Hans --target-device iphone --target-device ipad --minimum-deployment-target 26.0 --platform iphonesimulator
+/* com.apple.actool.compilation-results */
+/path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_generated_info.plist_thinned
+/path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_output/thinned/AppIcon60x60@2x.png
+/path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_output/thinned/AppIcon76x76@2x~ipad.png
+/path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_output/thinned/Assets.car
+
+
+LinkAssetCatalog /path/to/ProxyStudioBuild/outputs/ProxyStudio/ProxyStudio/Assets.xcassets (in target 'ProxyStudio' from project 'ProxyStudio')
+    cd /path/to/ProxyStudioBuild/outputs/ProxyStudio
+    builtin-linkAssetCatalog --thinned /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_output/thinned --thinned-dependencies /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_generated_info.plist_thinned --unthinned /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_output/unthinned --unthinned-dependencies /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_generated_info.plist_unthinned --output /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app --plist-output /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_generated_info.plist
+note: Emplaced /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/Assets.car (in target 'ProxyStudio' from project 'ProxyStudio')
+note: Emplaced /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/AppIcon76x76@2x~ipad.png (in target 'ProxyStudio' from project 'ProxyStudio')
+note: Emplaced /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/AppIcon60x60@2x.png (in target 'ProxyStudio' from project 'ProxyStudio')
+
+ProcessInfoPlistFile /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/Info.plist /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/empty-ProxyStudio.plist (in target 'ProxyStudio' from project 'ProxyStudio')
+    cd /path/to/ProxyStudioBuild/outputs/ProxyStudio
+    builtin-infoPlistUtility /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/empty-ProxyStudio.plist -producttype com.apple.product-type.application -genpkginfo /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/assetcatalog_generated_info.plist -o /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/Info.plist
+
+CopySwiftLibs /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app (in target 'ProxyStudio' from project 'ProxyStudio')
+    cd /path/to/ProxyStudioBuild/outputs/ProxyStudio
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/ProxyStudio.debug.dylib --scan-folder /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/Frameworks --scan-folder /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/PlugIns --scan-folder /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/SystemExtensions --scan-folder /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/Extensions --platform iphonesimulator --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.gJE9Fv/Metal.xctoolchain --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /path/to/ProxyStudioBuild/work/DerivedData/Build/Products/Debug-iphonesimulator/ProxyStudio.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ProxyStudio.build/Debug-iphonesimulator/ProxyStudio.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+Ignoring --strip-bitcode because --sign was not passed
+
+PruneExplicitPrecompiledModules /path/to/ProxyStudioBuild/work/DerivedData/SDKExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /path/to/ProxyStudioBuild/work/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+** BUILD SUCCEEDED **
