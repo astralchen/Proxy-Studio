@@ -2,7 +2,7 @@
 
 ## 工程结构与模块职责
 
-`ProxyStudio.xcodeproj` 提供共享方案 `ProxyStudio`。应用源码位于 `ProxyStudio/`：`Core/` 负责 SOCKS 解析与 Clash YAML 生成；`Services/` 负责二维码、文件与分享；`Views/` 存放 SwiftUI 界面；`Assets.xcassets/` 存放颜色和三种外观图标。单元测试与 UI 测试分别位于 `ProxyStudioTests/`、`ProxyStudioUITests/`。设计原稿在 `Design/`，截图在 `Preview/`。开发前阅读 `README.md`、`REQUIREMENTS.md` 和 `VALIDATION.md`。
+`ProxyStudio.xcodeproj` 提供独立 app target 与同名共享 Scheme：`ProxyStudio`（iOS）、`ProxyStudioMac`（原生 macOS）。应用源码位于 `ProxyStudio/`：`Core/` 负责 SOCKS 解析与 Clash YAML 生成；`Services/` 负责平台无关的二维码与文件文档；`Platforms/iOS/`、`Platforms/macOS/` 分别存放平台入口、界面和图片分享适配，Mac 窗口会话在 `Stores/ProxySession.swift`；`Platforms/Resources/Assets.xcassets/` 存放颜色及图标。共享单元测试在 `ProxyStudioTests/`，iOS UI 测试在 `ProxyStudioUITests/`，Mac 专属测试在 `ProxyStudioMacTests/`、`ProxyStudioMacUITests/`。通过同步目录的 target membership 选择源码，平台专属文件不添加 `Mac` 类型前缀或 `#if os(...)` 包装。设计原稿在 `Design/`，截图在 `Preview/`。开发前阅读 `README.md`、`REQUIREMENTS.md` 和 `VALIDATION.md`。
 
 ## 构建、测试与本地运行
 
@@ -18,6 +18,29 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudio \
 ```
 
 先设置 Xcode 路径，再执行构建或测试命令：`build` 无需真机签名，`test` 运行两个测试目标。按本机环境替换模拟器名称。在 Xcode 中按 `⌘R` 运行；真机调试需配置自己的 Team。
+
+## macOS 开发目标与适配约定
+
+原生 Mac 使用独立 `ProxyStudioMac` target 与 Scheme，最低支持 macOS 26.0，iOS target 最低版本保持 26.0。平台源码按目录隔离，共享核心逻辑与资源；验证边界以 `VALIDATION.md` 的实际证据为准。
+
+```sh
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
+  -configuration Debug -destination 'platform=macOS' \
+  -derivedDataPath .build/mac CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
+  -destination 'platform=macOS' -derivedDataPath .build/mac \
+  CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual test
+./script/build_and_run.sh --verify
+```
+
+Mac 测试使用本地临时签名，不改动工程的 Team；在 Xcode 中选择 `ProxyStudioMac` / `My Mac` 可运行。运行脚本会重启旧 Mac 进程，其内存会话不保留。
+
+- 沿用 Xcode 27.1 或更新版本，仅依赖 Apple 系统框架；复用 SOCKS 解析和 YAML 生成逻辑，将平台专属图片、界面及分享 API 隔离在服务或视图适配层。
+- 按容器可用尺寸布局分栏窗口和可滚动内容，不通过设备型号判断。窗口与分栏调整保持会话状态，每个窗口拥有独立的输入、节点和导出选项。
+- 支持标准文本编辑与键盘操作、可选择且按可用宽度换行的 YAML 预览，以及 Mac 原生系统分享和保存面板。
+- 验证覆盖原生构建与启动、共享单元测试、PNG 回读、导入与预览、窗口调整、多窗口、键盘、浅色与深色外观、图片及链接分享，以及 PNG/YAML 保存成功、失败和取消路径。
+- macOS 未完成验证的项目在 `VALIDATION.md` 中标为“未执行”；只有实际工具或系统限制才标为“被环境阻塞”，不引用旧 iOS 结果作为 Mac 通过证据。平台功能变化时同步更新 README、REQUIREMENTS 与 VALIDATION，所有通过结论附实际验证证据。
 
 ## 编码风格与命名约定
 

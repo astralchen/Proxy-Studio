@@ -8,9 +8,9 @@
 - AppIcon-Master.png：生成原稿。
 - AppIcon-Dark-Master.png：深色版生成原稿，青蓝与翡翠绿主体，保留透明背景。
 - AppIcon-Tinted-Master.png：着色版生成原稿；正式资源已消除原稿轻微色偏。
-- ../ProxyStudio/Assets.xcassets/AppIcon.appiconset/AppIcon.png：正式应用图标。
-- ../ProxyStudio/Assets.xcassets/AppIcon.appiconset/AppIcon-Dark.png：Dark 槽位，RGBA，背景透明。
-- ../ProxyStudio/Assets.xcassets/AppIcon.appiconset/AppIcon-Tinted.png：Tinted 槽位，Gray Gamma 2.2，不透明。
+- ../ProxyStudio/Platforms/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png：正式应用图标。
+- ../ProxyStudio/Platforms/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-Dark.png：Dark 槽位，RGBA，背景透明。
+- ../ProxyStudio/Platforms/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-Tinted.png：Tinted 槽位，Gray Gamma 2.2，不透明。
 - 工程 Debug、Release 均指向 AppIcon。
 
 此版本为三种外观的静态 PNG 资源，未制作 Icon Composer 分层文件。深色透明背景与着色灰度图遵循 [Apple 资源目录说明](https://developer.apple.com/documentation/xcode/configuring-your-app-icon)。变体保留相扣方环的构图与视觉身份，由生成式编辑制作，几何并非逐像素完全一致。

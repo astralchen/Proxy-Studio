@@ -14,18 +14,56 @@
 			remoteGlobalIDString = 000000000000000000000006;
 			remoteInfo = ProxyStudio;
 		};
+		000000000000000000000214 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000000000206;
+			remoteInfo = ProxyStudioMac;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		000000000000000000000008 /* ProxyStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = ProxyStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000000000009 /* ProxyStudioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ProxyStudioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0000000000000000000000CB /* ProxyStudioUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ProxyStudioUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000208 /* Proxy Studio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = "Proxy Studio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000209 /* ProxyStudioMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ProxyStudioMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0000000000000000000002CB /* ProxyStudioMacUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ProxyStudioMacUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		77F5D94D3077A27400A1C1EF /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Platforms/macOS/App/ProxyStudioApp.swift,
+				Platforms/macOS/Services/ImageShareButton.swift,
+				Platforms/macOS/Stores/ProxySession.swift,
+				Platforms/macOS/Views/ContentView.swift,
+				Platforms/macOS/Views/ImportView.swift,
+				Platforms/macOS/Views/NodeDetailView.swift,
+				Platforms/macOS/Views/ProxyCommands.swift,
+			);
+			target = 000000000000000000000006 /* ProxyStudio */;
+		};
+		77F5D94E3077A27400A1C1EF /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Platforms/iOS/App/ProxyStudioApp.swift,
+				Platforms/iOS/Services/ShareSheet.swift,
+				Platforms/iOS/Views/ContentView.swift,
+				Platforms/iOS/Views/NodeDetailView.swift,
+			);
+			target = 000000000000000000000206 /* ProxyStudioMac */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		000000000000000000000003 /* ProxyStudio */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ProxyStudio; sourceTree = "<group>"; };
+		000000000000000000000003 /* ProxyStudio */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (77F5D94D3077A27400A1C1EF /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 77F5D94E3077A27400A1C1EF /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ProxyStudio; sourceTree = "<group>"; };
 		000000000000000000000004 /* ProxyStudioTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ProxyStudioTests; sourceTree = "<group>"; };
 		0000000000000000000000C9 /* ProxyStudioUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ProxyStudioUITests; sourceTree = "<group>"; };
+		000000000000000000000309 /* ProxyStudioMacTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ProxyStudioMacTests; sourceTree = "<group>"; };
+		00000000000000000000030A /* ProxyStudioMacUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ProxyStudioMacUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +88,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		00000000000000000000020E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000211 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0000000000000000000002CE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -58,7 +117,9 @@
 			children = (
 				000000000000000000000003 /* ProxyStudio */,
 				000000000000000000000004 /* ProxyStudioTests */,
+				000000000000000000000309 /* ProxyStudioMacTests */,
 				0000000000000000000000C9 /* ProxyStudioUITests */,
+				00000000000000000000030A /* ProxyStudioMacUITests */,
 				000000000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -67,8 +128,11 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000008 /* ProxyStudio.app */,
+				000000000000000000000208 /* Proxy Studio.app */,
 				000000000000000000000009 /* ProxyStudioTests.xctest */,
+				000000000000000000000209 /* ProxyStudioMacTests.xctest */,
 				0000000000000000000000CB /* ProxyStudioUITests.xctest */,
+				0000000000000000000002CB /* ProxyStudioMacUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -138,6 +202,69 @@
 			productReference = 0000000000000000000000CB /* ProxyStudioUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		000000000000000000000206 /* ProxyStudioMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00000000000000000000020B /* Build configuration list for PBXNativeTarget "ProxyStudioMac" */;
+			buildPhases = (
+				00000000000000000000020D /* Sources */,
+				00000000000000000000020E /* Frameworks */,
+				00000000000000000000020F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				000000000000000000000003 /* ProxyStudio */,
+			);
+			name = ProxyStudioMac;
+			productName = ProxyStudioMac;
+			productReference = 000000000000000000000208 /* Proxy Studio.app */;
+			productType = "com.apple.product-type.application";
+		};
+		000000000000000000000207 /* ProxyStudioMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00000000000000000000020C /* Build configuration list for PBXNativeTarget "ProxyStudioMacTests" */;
+			buildPhases = (
+				000000000000000000000210 /* Sources */,
+				000000000000000000000211 /* Frameworks */,
+				000000000000000000000212 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				000000000000000000000213 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				000000000000000000000004 /* ProxyStudioTests */,
+				000000000000000000000309 /* ProxyStudioMacTests */,
+			);
+			name = ProxyStudioMacTests;
+			productName = ProxyStudioMacTests;
+			productReference = 000000000000000000000209 /* ProxyStudioMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		0000000000000000000002CA /* ProxyStudioMacUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0000000000000000000002CC /* Build configuration list for PBXNativeTarget "ProxyStudioMacUITests" */;
+			buildPhases = (
+				0000000000000000000002CD /* Sources */,
+				0000000000000000000002CE /* Frameworks */,
+				0000000000000000000002CF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				000000000000000000000213 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				00000000000000000000030A /* ProxyStudioMacUITests */,
+			);
+			name = ProxyStudioMacUITests;
+			productName = ProxyStudioMacUITests;
+			productReference = 0000000000000000000002CB /* ProxyStudioMacUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -171,8 +298,11 @@
 			projectRoot = "";
 			targets = (
 				000000000000000000000006 /* ProxyStudio */,
+				000000000000000000000206 /* ProxyStudioMac */,
 				000000000000000000000007 /* ProxyStudioTests */,
+				000000000000000000000207 /* ProxyStudioMacTests */,
 				0000000000000000000000CA /* ProxyStudioUITests */,
+				0000000000000000000002CA /* ProxyStudioMacUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -193,6 +323,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		0000000000000000000000CF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00000000000000000000020F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000212 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0000000000000000000002CF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -223,6 +374,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		00000000000000000000020D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000210 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0000000000000000000002CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -230,6 +402,11 @@
 			isa = PBXTargetDependency;
 			target = 000000000000000000000006 /* ProxyStudio */;
 			targetProxy = 000000000000000000000014 /* PBXContainerItemProxy */;
+		};
+		000000000000000000000213 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000000000206 /* ProxyStudioMac */;
+			targetProxy = 000000000000000000000214 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -274,6 +451,9 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MP8ZV9A8HZ;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Proxy Studio";
@@ -285,7 +465,11 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ProxyStudio;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -312,6 +496,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.ProxyStudio;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -372,6 +559,132 @@
 			};
 			name = Release;
 		};
+		000000000000000000000266 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Configuration/ProxyStudioMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MP8ZV9A8HZ;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Proxy Studio";
+				INFOPLIST_KEY_CFBundleName = "Proxy Studio";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ProxyStudio;
+				PRODUCT_MODULE_NAME = ProxyStudio;
+				PRODUCT_NAME = "Proxy Studio";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		000000000000000000000267 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Configuration/ProxyStudioMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MP8ZV9A8HZ;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Proxy Studio";
+				INFOPLIST_KEY_CFBundleName = "Proxy Studio";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ProxyStudio;
+				PRODUCT_MODULE_NAME = ProxyStudio;
+				PRODUCT_NAME = "Proxy Studio";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		000000000000000000000268 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ProxyStudioMacTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Proxy Studio.app/Contents/MacOS/Proxy Studio";
+			};
+			name = Debug;
+		};
+		000000000000000000000269 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ProxyStudioMacTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Proxy Studio.app/Contents/MacOS/Proxy Studio";
+			};
+			name = Release;
+		};
+		0000000000000000000002D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ProxyStudioMacUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = ProxyStudioMac;
+			};
+			name = Debug;
+		};
+		0000000000000000000002D3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.ProxyStudioMacUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_TARGET_NAME = ProxyStudioMac;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -407,6 +720,33 @@
 			buildConfigurations = (
 				0000000000000000000000D2 /* Debug */,
 				0000000000000000000000D3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		00000000000000000000020B /* Build configuration list for PBXNativeTarget "ProxyStudioMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000266 /* Debug */,
+				000000000000000000000267 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		00000000000000000000020C /* Build configuration list for PBXNativeTarget "ProxyStudioMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000268 /* Debug */,
+				000000000000000000000269 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0000000000000000000002CC /* Build configuration list for PBXNativeTarget "ProxyStudioMacUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0000000000000000000002D2 /* Debug */,
+				0000000000000000000002D3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

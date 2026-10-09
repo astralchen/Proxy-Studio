@@ -1,5 +1,4 @@
 import CoreImage.CIFilterBuiltins
-import UIKit
 
 /// 使用 Core Image 生成可显示和导出的二维码图片。
 ///
@@ -16,7 +15,7 @@ enum QRCodeRenderer {
     ///
     /// - Parameter text: 要编码的完整文本。
     /// - Returns: 生成的二维码；滤镜无法编码输入或渲染失败时返回 `nil`。
-    static func image(for text: String) -> UIImage? {
+    static func image(for text: String) -> QRCodeImage? {
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(text.utf8)
         filter.correctionLevel = "M"
@@ -27,6 +26,6 @@ enum QRCodeRenderer {
         let result = output.composited(over: background)
             .transformed(by: CGAffineTransform(scaleX: 10, y: 10))
         guard let cgImage = context.createCGImage(result, from: result.extent) else { return nil }
-        return UIImage(cgImage: cgImage)
+        return QRCodeImage(cgImage: cgImage)
     }
 }

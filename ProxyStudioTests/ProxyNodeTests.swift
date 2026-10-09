@@ -1,5 +1,6 @@
 import XCTest
 import Vision
+import ImageIO
 @testable import ProxyStudio
 
 /// 验证链接解析、配置序列化与二维码内容的一致性。
@@ -77,7 +78,9 @@ final class ProxyNodeTests: XCTestCase {
     func testQRCodeRoundTrip() throws {
         let node = try ProxyNode.parse(ProxyNode.exampleLink)
         let image = try XCTUnwrap(QRCodeRenderer.image(for: node.shareLink))
-        let cgImage = try XCTUnwrap(image.cgImage)
+        let png = try XCTUnwrap(image.pngData())
+        let source = try XCTUnwrap(CGImageSourceCreateWithData(png as CFData, nil))
+        let cgImage = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
         let request = VNDetectBarcodesRequest()
         request.symbologies = [.qr]
         // 部分模拟器运行时未提供最新 Vision 模型，指定较早的修订版本进行回读。
@@ -85,6 +88,47 @@ final class ProxyNodeTests: XCTestCase {
         request.usesCPUOnly = true
         try VNImageRequestHandler(cgImage: cgImage).perform([request])
         XCTAssertEqual(request.results?.first?.payloadStringValue, node.shareLink)
-        XCTAssertGreaterThan(image.size.width, 200)
+        XCTAssertGreaterThan(cgImage.width, 200)
+        XCTAssertEqual(cgImage.width, cgImage.height)
+        XCTAssertEqual(cgImage.width, image.cgImage.width)
+    }
+
+    /// 验证实际编码 PNG 的四边均保留四模块（40 像素）白色静区。
+    @MainActor
+    func testPNGQuietZone() throws {
+        let image = try XCTUnwrap(QRCodeRenderer.image(for: ProxyNode.exampleLink))
+        let data = try XCTUnwrap(image.pngData())
+        let source = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
+        let decoded = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
+        let width = decoded.width
+        let height = decoded.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        try pixels.withUnsafeMutableBytes { buffer in
+            let context = try XCTUnwrap(CGContext(data: buffer.baseAddress, width: width, height: height,
+                                                 bitsPerComponent: 8, bytesPerRow: width * 4,
+                                                 space: CGColorSpaceCreateDeviceRGB(),
+                                                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+            context.draw(decoded, in: CGRect(x: 0, y: 0, width: width, height: height))
+        }
+        for y in 0..<height {
+            for x in 0..<width where x < 40 || x >= width - 40 || y < 40 || y >= height - 40 {
+                let offset = (y * width + x) * 4
+                guard pixels[offset...offset + 3].allSatisfy({ $0 == 255 }) else {
+                    XCTFail("PNG 静区不是不透明白色：\(x), \(y)")
+                    return
+                }
+            }
+        }
+    }
+
+    /// 验证 UTF-8 字节边界以及名称默认值不依赖平台。
+    func testInputByteBoundaries() throws {
+        let acceptedUser = String(repeating: "a", count: 255)
+        XCTAssertEqual(try ProxyNode.parse("socks://\(acceptedUser):password@localhost:1080").username, acceptedUser)
+        XCTAssertThrowsError(try ProxyNode.parse("socks://\(acceptedUser)a:password@localhost:1080"))
+        XCTAssertThrowsError(try ProxyNode.parse("socks://user:\(String(repeating: "中", count: 86))@localhost:1080"))
+        XCTAssertThrowsError(try ProxyNode.parse("socks://localhost:1080#\(String(repeating: "a", count: 257))"))
+        XCTAssertThrowsError(try ProxyNode.parse(String(repeating: "a", count: 4097)))
+        XCTAssertEqual(try ProxyNode.parse("socks://localhost:1080#%20").name, "SOCKS5 节点")
     }
 }

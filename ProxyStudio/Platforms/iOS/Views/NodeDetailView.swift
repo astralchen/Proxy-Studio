@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+
 /// 展示节点信息，并提供二维码分享与 Clash 配置导出操作。
 ///
 /// 导出选项和密码可见性仅属于当前详情视图，不回写到节点模型。
@@ -19,7 +20,7 @@ struct NodeDetailView: View {
     /// 是否显示完整密码。初始值为 `false`。
     @State private var revealPassword = false
     /// 当前节点的二维码；尚未生成或生成失败时为 `nil`。
-    @State private var qrImage: UIImage?
+    @State private var qrImage: QRCodeImage?
     /// 当前请求呈现的模态内容。一次只呈现一种内容。
     @State private var sheet: Sheet?
     /// 为下一次系统文件导出准备的文档。
@@ -36,7 +37,7 @@ struct NodeDetailView: View {
     /// 详情界面支持的模态内容及其展示时的数据快照。
     private enum Sheet: Identifiable {
         // YAML 预览保存字符串快照；图片分享保存生成后的图片。
-        case yaml(String), share(UIImage)
+        case yaml(String), share(QRCodeImage)
 
         /// 模态内容的类型标识，不随关联数据变化。
         var id: String {
@@ -79,7 +80,8 @@ struct NodeDetailView: View {
             Section {
                 VStack(spacing: 14) {
                     if let qrImage {
-                        Image(uiImage: qrImage).interpolation(.none).resizable().scaledToFit()
+                        Image(qrImage.cgImage, scale: 1, label: Text("\(node.name) 的 Shadowrocket 导入二维码"))
+                            .interpolation(.none).resizable().scaledToFit()
                             .frame(maxWidth: 300)
                             .accessibilityLabel("\(node.name) 的 Shadowrocket 导入二维码")
                         // 辅助功能字号使用纵向排列，为按钮文字提供足够的可用宽度。
@@ -137,7 +139,10 @@ struct NodeDetailView: View {
                       contentType: exportType, defaultFilename: exportName) { result in
             switch result {
             case .success: message = "文件已保存。"
-            case .failure(let error): message = "保存失败：\(error.localizedDescription)"
+            case .failure(let error):
+                if (error as NSError).domain != NSCocoaErrorDomain || (error as NSError).code != NSUserCancelledError {
+                    message = "保存失败：\(error.localizedDescription)"
+                }
             }
         }
         .alert("导出", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
@@ -152,7 +157,7 @@ struct NodeDetailView: View {
     /// 编码失败时仅更新提示信息；编码成功后，文件位置由用户在系统界面中选择。
     ///
     /// - Parameter image: 要保存的二维码图片。
-    private func saveQR(_ image: UIImage) {
+    private func saveQR(_ image: QRCodeImage) {
         guard let data = image.pngData() else { message = "无法生成 PNG 文件。"; return }
         exportDocument = ExportDocument(data: data)
         exportType = .png

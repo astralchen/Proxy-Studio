@@ -1,5 +1,6 @@
 import XCTest
 
+
 /// 验证示例导入、详情预览、文件导出及辅助功能字号下的主要操作。
 final class ProxyStudioUITests: XCTestCase {
     /// 验证从导入示例到保存配置的流程，并在发送旋转请求前后记录截图。
@@ -7,8 +8,11 @@ final class ProxyStudioUITests: XCTestCase {
     /// - Note: 断言只检查旋转请求后的控件存在性，不证明设备已实际切换为横屏布局。
     @MainActor
     func testImportPreviewAndRotate() throws {
+        continueAfterFailure = false
+        XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
-        app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
+        app.launchArguments = ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN",
+                               "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
         app.launch()
         XCTAssertTrue(app.buttons["试用示例节点"].waitForExistence(timeout: 10))
         app.buttons["试用示例节点"].tap()
@@ -21,7 +25,11 @@ final class ProxyStudioUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["protocolRow"].waitForExistence(timeout: 5))
         attach(app, "节点详情-横屏")
         let preview = app.buttons["预览 YAML"]
-        for _ in 0..<5 where !preview.isHittable { app.swipeUp() }
+        // 在详情表单中滚动，避免分栏或横屏时手势落到导入栏。
+        for _ in 0..<10 where !preview.isHittable {
+            if app.collectionViews.firstMatch.exists { app.collectionViews.firstMatch.swipeUp() }
+            else { app.swipeUp() }
+        }
         XCTAssertTrue(preview.isHittable)
         preview.tap()
         XCTAssertTrue(app.navigationBars["Clash YAML"].waitForExistence(timeout: 5))
@@ -35,6 +43,8 @@ final class ProxyStudioUITests: XCTestCase {
         let filename = app.textFields["DOCPicker.filenameTextField"]
         if filename.exists {
             filename.tap()
+            // 紧凑保存面板需再次激活文件名文本编辑。
+            filename.doubleTap()
             filename.typeText("-uitest-" + UUID().uuidString.prefix(8))
         }
         attach(app, "文件导出")
