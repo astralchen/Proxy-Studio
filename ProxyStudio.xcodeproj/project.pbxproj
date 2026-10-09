@@ -37,7 +37,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Platforms/macOS/App/ProxyStudioApp.swift,
-				Platforms/macOS/Services/ImageShareButton.swift,
+				Platforms/macOS/Services/OutputShareButton.swift,
 				Platforms/macOS/Stores/ProxySession.swift,
 				Platforms/macOS/Views/ContentView.swift,
 				Platforms/macOS/Views/ImportView.swift,
@@ -51,7 +51,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Platforms/iOS/App/ProxyStudioApp.swift,
-				Platforms/iOS/Services/ShareSheet.swift,
+				Platforms/iOS/Services/PNGShareItem.swift,
+				Platforms/iOS/Stores/ProxySession.swift,
 				Platforms/iOS/Views/ContentView.swift,
 				Platforms/iOS/Views/NodeDetailView.swift,
 			);

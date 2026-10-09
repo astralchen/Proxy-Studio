@@ -9,16 +9,7 @@ struct ImportView: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Image(systemName: "network.badge.shield.half.filled")
-                            .font(.system(size: 28)).foregroundStyle(.teal)
-                            .accessibilityHidden(true)
-                        Text("一条链接，多种导出。")
-                            .font(.title3.bold())
-                        Text("在本机转换 SOCKS 节点，生成二维码、Shadowrocket JSON 或 Clash 配置。")
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    ImportIntroduction()
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Label("导入节点", systemImage: "link").font(.headline)
@@ -57,19 +48,24 @@ struct ImportView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                                 .accessibilityIdentifier("parseError")
                         }
-                        Button {
-                            isEditing = false
-                            session.parse()
-                        } label: {
-                            Text("解析链接").frame(maxWidth: .infinity)
+                        GlassEffectContainer(spacing: 16) {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Button {
+                                    isEditing = false
+                                    session.parse()
+                                } label: {
+                                    Text("解析链接").frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(.glassProminent)
+                                .controlSize(.large)
+                                .disabled(!session.canParse)
+                                .help("解析当前输入（⌘↩）")
+                                .accessibilityIdentifier("parseButton")
+                                Button("试用示例节点") { session.input = ProxyNode.exampleLink }
+                                    .buttonStyle(.glass)
+                                    .disabled(session.isExporting)
+                            }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .disabled(!session.canParse)
-                        .help("解析当前输入（⌘↩）")
-                        .accessibilityIdentifier("parseButton")
-                        Button("试用示例节点") { session.input = ProxyNode.exampleLink }
-                            .disabled(session.isExporting)
                         Text("支持 socks://、socks5://、转义链接，以及 Base64 或明文账号。")
                             .font(.caption).foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)

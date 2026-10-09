@@ -6,7 +6,7 @@ struct ProxyStudioApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .tint(.teal)
+                .tint(WorkspaceStyle.accent)
                 #if DEBUG
                 .preferredColorScheme(debugColorScheme)
                 #endif

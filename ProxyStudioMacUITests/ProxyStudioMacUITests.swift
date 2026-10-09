@@ -2,6 +2,7 @@ import XCTest
 import Vision
 import ImageIO
 import CoreImage
+import AppKit
 
 /// 验证原生 Mac 的导入、输出切换、键盘操作及独立窗口。
 final class ProxyStudioMacUITests: XCTestCase {
@@ -32,9 +33,10 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertTrue(path.waitForExistence(timeout: 5))
         path.click()
         app.typeKey("a", modifierFlags: .command)
-        path.typeText(directory.path)
+        pastePath(directory.path, into: path, app: app)
         app.typeKey(XCUIKeyboardKey.return, modifierFlags: [])
-        XCTAssertTrue(app.buttons["OKButton"].waitForExistence(timeout: 5))
+        XCTAssertTrue(path.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["OKButton"].isEnabled)
         app.buttons["OKButton"].click()
         XCTAssertTrue(app.buttons["action-button-1"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@",
@@ -96,6 +98,33 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertEqual(Data(try XCTUnwrap(preview.value as? String).utf8), snapshot)
     }
 
+    /// 使用原生面板保存 YAML，逐字节验证视觉换行不影响输出。
+    @MainActor
+    func testYAMLActualSaveMatchesLivePreview() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("ProxyStudioYAML-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let app = launch()
+        importExample(app)
+        app.typeKey("2", modifierFlags: .command)
+        app.switches["udpToggle"].click()
+        let snapshot = Data(try XCTUnwrap(app.descendants(matching: .any)["yamlPreview"].value as? String).utf8)
+        app.buttons["exportYAML"].click()
+        XCTAssertTrue(app.buttons["OKButton"].waitForExistence(timeout: 5))
+        app.typeKey("g", modifierFlags: [.command, .shift])
+        let path = app.textFields["PathTextField"]
+        XCTAssertTrue(path.waitForExistence(timeout: 5))
+        path.click()
+        app.typeKey("a", modifierFlags: .command)
+        pastePath(directory.path, into: path, app: app)
+        app.typeKey(XCUIKeyboardKey.return, modifierFlags: [])
+        XCTAssertTrue(path.waitForNonExistence(timeout: 5))
+        app.buttons["OKButton"].click()
+        XCTAssertTrue(app.buttons["action-button-1"].waitForExistence(timeout: 10))
+        XCTAssertEqual(try Data(contentsOf: directory.appendingPathComponent("clash.yaml")), snapshot)
+        app.buttons["action-button-1"].click()
+        attach(app, "Glass-Mac-YAML实际保存")
+    }
+
     @MainActor
     private func saveJSON(_ app: XCUIApplication, directory: String) {
         app.buttons["exportJSON"].click()
@@ -105,9 +134,10 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertTrue(path.waitForExistence(timeout: 5))
         path.click()
         app.typeKey("a", modifierFlags: .command)
-        path.typeText(directory)
+        pastePath(directory, into: path, app: app)
         app.typeKey(XCUIKeyboardKey.return, modifierFlags: [])
-        XCTAssertTrue(app.buttons["OKButton"].waitForExistence(timeout: 5))
+        XCTAssertTrue(path.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["OKButton"].isEnabled)
         app.buttons["OKButton"].click()
     }
 
@@ -148,6 +178,7 @@ final class ProxyStudioMacUITests: XCTestCase {
     func testImportPasswordAndLiveYAML() {
         let app = launch()
         importExample(app)
+        app.buttons["nodeDisclosure"].click()
         app.buttons["togglePassword"].click()
         XCTAssertEqual(app.descendants(matching: .any)["nodePassword"].value as? String, "example-password")
         app.typeKey("2", modifierFlags: .command)
@@ -213,7 +244,7 @@ final class ProxyStudioMacUITests: XCTestCase {
             app.typeKey(XCUIKeyboardKey.escape, modifierFlags: [])
             XCTAssertTrue(app.buttons[identifier].waitForExistence(timeout: 5))
             XCTAssertFalse(app.buttons["action-button-1"].exists)
-            XCTAssertTrue(app.descendants(matching: .any)["protocolRow"].exists)
+            XCTAssertTrue(app.switches["udpToggle"].exists)
         }
     }
 
@@ -232,7 +263,14 @@ final class ProxyStudioMacUITests: XCTestCase {
     @MainActor
     func testWindowResizeAndSidebarPreserveSession() {
         let app = launch()
+        // 先收窄窗口，让密码按钮避开屏幕中央的系统提示；后续仍恢复默认基线再测尺寸。
+        let initialWindow = app.windows.firstMatch
+        let initialRightEdge = initialWindow.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0.8))
+            .withOffset(CGVector(dx: -1, dy: 0))
+        initialRightEdge.click(forDuration: 0.2, thenDragTo: initialRightEdge.withOffset(CGVector(
+            dx: -max(400, initialWindow.frame.width - 760), dy: 0)))
         importExample(app)
+        app.buttons["nodeDisclosure"].click()
         app.buttons["togglePassword"].click()
         app.typeKey("2", modifierFlags: .command)
         app.switches["udpToggle"].click()
@@ -294,6 +332,45 @@ final class ProxyStudioMacUITests: XCTestCase {
         attach(app, "Mac-宽窗口-YAML")
     }
 
+    /// 复制保存原始字节，并验证收起字段不会暴露密码。
+    @MainActor
+    func testCopyOriginalTextAndCollapsedDetails() throws {
+        let app = launch()
+        importExample(app)
+        XCTAssertFalse(app.buttons["togglePassword"].exists)
+        app.typeKey("3", modifierFlags: .command)
+        let expected = try XCTUnwrap(app.descendants(matching: .any)["jsonPreview"].value as? String)
+        app.buttons["copyOutput"].click()
+        XCTAssertEqual(NSPasteboard.general.string(forType: .string), expected)
+        XCTAssertTrue(app.staticTexts["copyFeedback"].waitForExistence(timeout: 3))
+        attach(app, "Glass-Mac-复制文本")
+    }
+
+    /// 原生分享菜单提供图片和链接；不向外部服务实际发送内容。
+    @MainActor
+    func testShareMenuOffersImageAndLink() {
+        let app = launch()
+        importExample(app)
+        app.descendants(matching: .any)["shareMenu"].click()
+        XCTAssertTrue(app.menuItems["分享图片"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.menuItems["分享导入链接"].exists)
+        app.typeKey(XCUIKeyboardKey.escape, modifierFlags: [])
+    }
+
+    /// 路径使用粘贴，避免中文输入法将斜杠转换为顿号。
+    @MainActor
+    private func pastePath(_ directory: String, into field: XCUIElement, app: XCUIApplication) {
+        let previous = NSPasteboard.general.string(forType: .string)
+        defer {
+            NSPasteboard.general.clearContents()
+            if let previous { NSPasteboard.general.setString(previous, forType: .string) }
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(directory, forType: .string)
+        app.typeKey("v", modifierFlags: .command)
+        XCTAssertEqual(field.value as? String, directory)
+    }
+
     @MainActor
     private func launch(appearance: String = "Dark") -> XCUIApplication {
         continueAfterFailure = false
@@ -302,6 +379,14 @@ final class ProxyStudioMacUITests: XCTestCase {
                                "-ApplePersistenceIgnoreState", "YES", "-NSQuitAlwaysKeepsWindows", "NO",
                                "-AppleInterfaceStyle", appearance]
         app.launch()
+        let window = app.windows.firstMatch
+        XCTAssertTrue(window.waitForExistence(timeout: 10))
+        let frame = window.frame
+        // 从左侧空白标题栏拖动，避开屏幕中央可能存在的系统提示。
+        let titleBar = window.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0))
+            .withOffset(CGVector(dx: 0, dy: 20))
+        titleBar.click(forDuration: 0.2, thenDragTo: titleBar.withOffset(CGVector(
+            dx: 80 - frame.minX, dy: 80 - frame.minY)))
         XCTAssertTrue(app.buttons["试用示例节点"].waitForExistence(timeout: 10))
         return app
     }
@@ -310,7 +395,7 @@ final class ProxyStudioMacUITests: XCTestCase {
     private func importExample(_ app: XCUIApplication) {
         app.buttons["试用示例节点"].click()
         app.typeKey(XCUIKeyboardKey.return, modifierFlags: .command)
-        XCTAssertTrue(app.descendants(matching: .any)["protocolRow"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.switches["udpToggle"].waitForExistence(timeout: 5))
     }
 
     @MainActor

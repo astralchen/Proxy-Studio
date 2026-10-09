@@ -6,13 +6,12 @@ import UniformTypeIdentifiers
 @MainActor
 @Observable
 final class ProxySession {
-    /// 输出工作区的三个标签。
-    enum Output: String, CaseIterable, Identifiable {
-        case qr = "二维码"
-        case yaml = "Clash YAML"
-        case json = "Shadowrocket JSON"
-        var id: Self { self }
-    }
+    /// 输出格式沿用原菜单接口，具体格式由两平台共享。
+    typealias Output = OutputFormat
+    /// 节点完整字段是否展开；新节点默认收起。
+    var detailsExpanded = false
+    /// 复制操作的短暂反馈；不影响导出结果。
+    var copyFeedback: String?
 
     /// 当前输入；修改后立即使旧节点和解析错误失效。
     var input = "" {
@@ -24,6 +23,8 @@ final class ProxySession {
             parseError = nil
             qrImage = nil
             revealPassword = false
+            detailsExpanded = false
+            copyFeedback = nil
             udpEnabled = false
         }
     }
@@ -88,6 +89,8 @@ final class ProxySession {
                 nodeIdentifier = UUID()
                 nodeCreatedAt = Date()
                 revealPassword = false
+                detailsExpanded = false
+                copyFeedback = nil
                 udpEnabled = parsed.udpEnabled
                 output = .qr
             }
@@ -113,9 +116,27 @@ final class ProxySession {
         parseError = nil
         qrImage = nil
         revealPassword = false
+        detailsExpanded = false
+        copyFeedback = nil
         udpEnabled = false
         output = .qr
         message = nil
+    }
+
+    /// 当前输出可保存；二维码及 JSON 生成失败不影响其他格式。
+    var canExportCurrent: Bool {
+        guard canUseOutput else { return false }
+        switch output { case .qr: return qrImage != nil; case .yaml: return true; case .json: return jsonData != nil }
+    }
+
+    /// 当前文本格式的原始内容；二维码没有文本复制操作。
+    var outputText: String? {
+        switch output { case .qr: nil; case .yaml: yaml; case .json: json }
+    }
+
+    /// 使用当前格式捕获快照并打开系统面板。
+    func exportCurrent() {
+        switch output { case .qr: exportPNG(); case .yaml: exportYAML(); case .json: exportJSON() }
     }
 
     /// 捕获当前 YAML 的字节快照并打开系统保存面板。

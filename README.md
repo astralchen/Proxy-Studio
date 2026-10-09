@@ -6,11 +6,19 @@
 
 ## 界面预览
 
-![Proxy Studio 宽屏分栏界面：左侧导入 SOCKS 链接，右侧展示待导入提示](Preview/duo-split-view.png)
+![iPhone 二维码工作区：按内容宽度展示，底部提供玻璃操作组](Preview/glass-iphone-qr.png)
 
-![原生 Mac 浅色二维码工作区](Preview/mac-light-qr.png)
+![Duo 紧凑视口：滚动查看完整二维码，滚动位置不改变尺寸](Preview/glass-duo-qr.png)
 
-![原生 Mac 字段对齐后的节点工作区](Preview/mac-summary-aligned.png)
+二维码按内容宽度展示，最大 320 pt；短视口通过滚动查看，滚动不改变图片大小。Duo 的[滚动前截图](Preview/glass-duo-qr-before-scroll.png)与上图使用相同的二维码尺寸。
+
+![iPad 冰青通透分栏：导入、节点摘要与实时 JSON 预览](Preview/glass-ipad-json.png)
+
+![原生 Mac 最小窗口：冰青控件、可展开节点摘要与即时 YAML](Preview/glass-mac-minimum-yaml.png)
+
+![原生 Mac 最小窗口：保留 UDP 与密码状态，切换即时 JSON](Preview/glass-mac-minimum-json.png)
+
+本次改版截图均来自实际运行的界面，并使用虚构示例节点。设备、外观与验收边界见 [验证记录](VALIDATION.md#2026-10-09--液态玻璃工作区改版)。
 
 ## 打开与运行
 
@@ -24,7 +32,7 @@
 
 iOS 与 Mac 使用独立 app target 和共享源码：`ProxyStudio` / `ProxyStudioMac`，分别提供同名共享 Scheme。Mac 最低支持 **macOS 26.0**，使用原生 AppKit / SwiftUI，未使用 Mac Catalyst。
 
-Mac 工作区左侧导入，右侧显示节点摘要及“二维码 / Clash YAML / Shadowrocket JSON”标签页。摘要字段共用标签列和值列，服务器、端口、账号和密码按列对齐，长值按可用宽度换行。窄分栏中第三个标签简写为“JSON”，辅助功能名称保持“Shadowrocket JSON”。二维码、JSON 与 YAML 共用 UDP 开关并即时更新，可选择复制并按窗口宽度换行；保存内容始终使用原始文本。默认窗口内容为 1100×760 pt，最小内容为 760×560 pt；窗口和分栏调整保留会话，每个新窗口拥有独立输入、节点和输出选项。
+Mac 工作区左侧导入，右侧显示节点摘要及“二维码 / Clash YAML / Shadowrocket JSON”输出。节点名称、地址和 UDP 常驻，点击“节点详情”展开协议、账号及默认隐藏的密码。完整字段共用标签列和值列，长值按可用宽度换行。格式切换按控件所需宽度使用完整标签、YAML / JSON 简写或菜单，辅助功能名称保持完整。二维码、JSON 与 YAML 共用 UDP 开关并即时更新，可选择复制并按窗口宽度换行；保存内容始终使用原始文本。默认窗口内容为 1100×760 pt，最小内容为 760×560 pt；窗口和分栏调整保留会话，每个新窗口拥有独立输入、节点和输出选项。
 
 - `⌘↩` 解析，`⇧⌘⌫` 清空，`⌘1` / `⌘2` / `⌘3` 切换输出，`⌘N` 新窗口；文本标签页中 Escape 返回二维码。
 - 使用原生系统保存面板和图片 / 链接分享入口。默认文件名为 `shadowrocket.png`、`clash.yaml`、`shadowrocket.json`；取消不显示成功提示，也不清除会话。
@@ -48,9 +56,15 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
 
 实际构建、测试、保存文件及桌面检查证据见 [VALIDATION.md](VALIDATION.md)；macOS 26.0 最低系统运行、第三方客户端兼容性等未完成项单独记录，不由编译结果代替。
 
+## 液态玻璃工作区
+
+界面采用冰青通透配色：浅色冷白、深色石墨，青绿用于主要操作。解析、保存和次要操作使用系统 Liquid Glass；原生侧栏、工具栏与系统面板保持系统材质。输入、节点字段和配置正文使用稳定底色，二维码始终保留黑白像素及白色静区。
+
+iOS 底部安全区域提供当前格式的保存及分享 / 复制操作，大字体下纵向排列；Mac 将操作集中到原生工具栏，完整导出菜单保留在“节点”菜单中。JSON / YAML 在工作区随 UDP 即时更新，不再通过 iOS 预览 sheet 捕获旧快照。系统保存面板打开前仍捕获不可变文件字节，取消不清空会话、不提示成功。
+
 ## 使用
 
-粘贴 SOCKS 链接 → 解析链接 → 查看节点详情 → 保存或分享 Shadowrocket 二维码，或预览、导出 Shadowrocket JSON 和 Clash YAML。
+粘贴 SOCKS 链接 → 解析链接 → 输出工作区 → 保存或分享二维码，或切换到 JSON / YAML 预览、复制与导出。手机解析成功后自动进入工作区；返回导入页保留 UDP、密码可见性、输出选择与节点元数据，实际修改输入才使旧结果失效。
 
 - 支持 `socks://`、`socks5://`、`socks\://…\@…` 转义格式。
 - 支持 Base64 / Base64URL 编码的 `username:password`、Shadowrocket 整体 Base64 连接信息，以及 URL 百分号编码的明文账号密码。
@@ -70,7 +84,7 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
 
 ### Shadowrocket JSON
 
-iOS 的 Shadowrocket 区域提供“预览 JSON”和“导出 JSON”；Mac 使用第三个输出标签页，也可通过工具栏和“节点”菜单导出。默认文件名为 `shadowrocket.json`。二维码、JSON 与 Clash YAML 共用 UDP 开关；未携带 UDP 参数的节点默认关闭，导入带 `udp=1` 的链接时启用。iOS 的“导出选项”和 Mac 所有输出标签页控制同一选项，切换节点时重新使用新链接的初始状态。
+iOS 输出工作区切换到“Shadowrocket JSON”后即时预览，并提供“导出 JSON”和“复制文本”；Mac 使用第三种输出，也可通过工具栏和“节点”菜单导出。默认文件名为 `shadowrocket.json`。二维码、JSON 与 Clash YAML 共用 UDP 开关；未携带 UDP 参数的节点默认关闭，导入带 `udp=1` 的链接时启用。两端摘要中的 UDP 开关控制同一选项，切换节点时重新使用新链接的初始状态。
 
 JSON 按已确认的 Shadowrocket 单节点导出样本生成，顶层是一个包含 41 个字段的对象。协议为 `Socks5`，端口为字符串，UDP 为整数 `0/1`，名称、账号、密码使用 `title`、`user`、`password`。免认证时账号和密码为空字符串；IPv6 不带外层方括号。每个新解析节点拥有稳定 UUID 与创建时间，预览、切换输出和重复导出不会刷新这些元数据。
 
@@ -100,8 +114,9 @@ JSON 预览可选择文本并按可用宽度换行，保存时使用原始 UTF-8
 
 - `ProxyStudio/Core`：链接解析、规范化、Clash YAML 与 Shadowrocket JSON 生成。
 - `ProxyStudio/Services`：平台无关的 Core Image 二维码、PNG 编码与文件文档。
-- `ProxyStudio/Platforms/iOS`：iOS 应用入口、导入、节点详情、YAML / JSON 快照预览和 UIKit 分享。
+- `ProxyStudio/Platforms/iOS`：iOS 应用入口、独立窗口会话、导入、即时输出工作区、原生 PNG 分享与 UIKit 剪贴板适配。
 - `ProxyStudio/Platforms/macOS`：Mac 应用入口、桌面视图、`Stores/ProxySession` 和 AppKit 图片分享。
+- `ProxyStudio/Platforms/Shared`：两端共用的导入说明、摘要、格式切换、输出预览与视觉语义。
 - `ProxyStudio/Platforms/Resources`：两平台共享的颜色、图标资源。
 - `ProxyStudioTests`：两平台共用的解析边界、IPv6、转义、YAML、JSON 契约与确定性和实际 PNG 回验。
 - `ProxyStudioMacTests` / `ProxyStudioMacUITests`：Mac 会话和原生桌面流程；不使用移动端旋转或文档选择器标识。

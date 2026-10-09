@@ -257,3 +257,55 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudio \
 - 最终原生 Mac 构建与启动 **通过**：`./script/build_and_run.sh --verify` 退出 0，日志 `mac-run-final.log` 为 `BUILD SUCCEEDED`；Computer Use 确认最终 `.build/run/Build/Products/Debug/Proxy Studio.app` 中示例节点、二维码、共享 UDP 关闭状态及 PNG 按钮可见。工程 plist 校验与 `git diff --check` **通过**。
 - 新增已检查的截图：`Preview/mac-shadowrocket-qr.png`、`Preview/mac-shadowrocket-shared-udp-minimum.png`。iOS 保存测试截图保留在结果附件，截图时二维码上缘滚动到可视区域之外，不将该截图作为完整二维码可见性通过证据；实际 PNG 完整性由保存回读核验。
 - 本次没有扩大系统文件夹权限，没有改动 Shadowrocket 已有节点或连接。源码哈希快照：`.build/validation/qr-alignment-20261009/source-snapshot.json`。
+
+## 2026-10-09 — 液态玻璃工作区改版
+
+本次使用冰青视觉资源与原生玻璃操作控件，保留独立 iOS / Mac target。共享工作区提供常驻摘要、可展开字段、宽度自适应的输出选择与即时文本预览。iOS 根视图持有独立会话，解析后自动进入工作区；返回、输出切换与布局变化不重新生成节点身份。辅助功能字号下字段上下排列，操作区与滚动内容分开布局，玻璃按钮不遮挡二维码或正文。iOS 图片分享在原生 popover 中使用 ShareLink 的不可变 PNG 数据表示；Mac 分享菜单仍锚定到所属窗口的原生按钮。保存面板继续使用不可变字节快照。
+
+以下只记录本次实际证据，历史记录不替代改版验收。结果包与 `.build/validation/glass-20261009/` 中的日志保留在本机；截图存入 `Preview/glass-*.png`。
+
+| 检查 | 状态 | 本次证据与边界 |
+| --- | --- | --- |
+| iOS / Mac Debug 应用及测试编译 | 通过 | 两平台 build-for-testing 包含 Debug 应用编译；最终语义 RTL 与配置正文构建日志为 `.build/validation/glass-20261009/proxy-glass-ios-rtl-test-final-build.log`、`proxy-glass-mac-rtl-final-build.log` |
+| Mac 原生启动 | 通过 | `./script/build_and_run.sh --verify` 返回 0，完成构建、启动和进程检查；交付版本再次运行并返回 0，日志 `proxy-glass-delivery-native-launch.log` |
+| iOS 共享及会话单元测试 | 通过 | iPhone 17 Pro / iOS 26.5，25 项、0 失败，包含元数据、导航持有的会话、输入失效、JSON / YAML / PNG 不可变快照及结果反馈；`.build/results/Glass-iPhone-Delivery-Final-20261009.xcresult`、`proxy-glass-iphone-delivery-final.log` |
+| Mac 共享及会话单元测试 | 通过 | 共享核心及会话 36 项、0 失败，包含独立 PNG 快照载荷回读；`.build/results/Glass-Mac-Units-Final-20261009.xcresult`、`proxy-glass-mac-units-final.log` |
+| Mac 已执行的工作区 UI 回归 | 通过 | `.build/results/Glass-Mac-Final-20261009.xcresult` 中 35 单元及 10 UI 通过：取消、复制原文、输入失效、密码、即时 YAML / JSON、快捷键、独立窗口、PNG 实际保存与 Vision 回读、JSON 实际保存及只读失败、分享菜单；窗口用例中止，结果包整体仍为失败，不能写成完整套件通过 |
+| Mac 最小 / 宽窗口及侧栏恢复 | 通过 | 最终窗口尺寸用例通过，实际拖动至最小窗口与宽窗口，检查预览、格式切换、导出控件范围以及 UDP、密码、节点保留；`.build/results/Glass-Mac-WindowYAML-Final-20261009.xcresult`、`proxy-glass-mac-window-yaml-final.log`。最小窗口截图无遮挡，宽窗口附件被系统提示遮挡，后者不作为无干扰视觉通过 |
+| Mac 默认窗口与图片 / 链接分享面板 | 通过 | 重新启动最终原生 app 后通过 CUA 实际检查默认深色窗口，二维码完整，摘要收起且三种全称切换可见；图片与链接分别实际呈现锚定到当前按钮的 `ShareSheet.Popover`，关闭后节点保留。没有发送给联系人；交互截图在本次工具记录中 |
+| Mac 宽窗口无干扰视觉复核 | 被环境阻塞 | XCTest Runner 的“访问文稿文件夹”提示遮挡宽窗口附件；未授予额外文稿权限。宽度 / 状态断言已通过，干净宽窗口截图仍待补齐 |
+| Mac YAML 实际保存 | 通过 | 最终独立用例使用系统面板写入临时目录，实际 `clash.yaml` 与当前 UDP 预览的原始 UTF-8 字节一致；与窗口用例合计 2 项 UI、0 失败，`Glass-Mac-WindowYAML-Final-20261009.xcresult` |
+| iPhone 窄屏返回、复制、深色分享及最大字号 | 通过 | `Glass-iPhone-Delivery-Final-20261009.xcresult` 中 3 UI、0 失败：返回后 JSON、UDP、密码状态保留，主动粘贴核对复制原文，输入修改使旧结果失效；原生图片分享面板实际打开；最大字号短标签菜单和导出 / 复制可达。最终视口二维码在 `Glass-iPhone-Pixels-Final-20261009.xcresult` 再通过首屏水平 / 垂直范围断言与原生深色分享，共 2 项 UI、0 失败 |
+| Duo 自动导航与即时输出 | 通过 | `.build/results/Glass-Duo-UI-20261009.xcresult`，1 UI 通过，验证三格式入口、共用 UDP、稳定 UUID 与 JSON 保存取消；最终原生分享与操作区布局另行重验 |
+| Duo 辅助功能字号详情与会话交互 | 通过 | `proxy-glass-duo-verified-test.log` 记录最大字号展开密码、返回保留 / 原文复制、原生深色分享、三格式 UDP / UUID / 取消等 6 项 UI 通过；该运行随后被系统同名文件确认页阻塞，未完整生成结果包，不将其记为整套通过 |
+| iPad 宽分栏、最大字号及实时文本 | 通过 | `Glass-iPad-Verified-20261009.xcresult` 中 2 UI、0 失败，检查 UDP、稳定 UUID、三格式切换和取消；最后修正菜单显示短标签后 `Glass-iPad-Menu-Final-20261009.xcresult` 再通过 1 项最大字号用例，截图确认 JSON 标签完整可见 |
+| iOS PNG / JSON / YAML 实际保存与回读 | 通过 | iPad / iOS 26.5，`Glass-iPad-Save-Final-20261009.xcresult` 中 3 UI、0 失败；File Provider Storage 实际 JSON 821 bytes、YAML 426 bytes 与本次预览原始附件逐字节一致，PNG 14271 bytes / 670×670 经独立 Vision CPU 解码后与启用 UDP 的完整导入链接一致；`ios-file-readback.json`、`ios-png-readback.json` |
+| Duo / iOS 27.1 实际保存回归 | 被环境阻塞 | 已中止导出留下独立文件服务的同名确认 / 进行中状态，重启同一设备后仍未完成该环境的最终保存回读；没有替换已有文件，也不引用 iPad 成功结果认定 Duo 保存通过 |
+| 最终二维码完整显示与像素截图 | 通过 | `Glass-iPhone-Pixels-Final-20261009.xcresult` 中首屏范围断言通过；`Glass-Duo-Pixels-RTL-Final-20261009.xcresult` 中二维码像素场景通过，并实际检查白色静区和完整二维码，最终截图内的缩小二维码亦由独立 Vision 解出 UDP 关闭的正确链接，见 `duo-display-qr-readback.json`。Duo 前轮 `nodeDetails.frame` 查询停滞，已中止，未认定其几何断言通过 |
+| iOS 强制语义 RTL | 通过 | `Glass-Duo-SemanticRTL-Final-20261009.xcresult` 中 1 UI、0 失败，实际截图确认标题、摘要、UDP 控件、格式顺序及操作组镜像，UDP 为 1 且 JSON 原文可读；配置正文保持协议定义的 LTR。首轮阿拉伯语参数回退中文 LTR，未作为 RTL 证据；最终使用不写入系统偏好的 Debug `-ProxyStudioRTL` 参数 |
+| Mac RTL、VoiceOver 实际朗读、减少透明度及减少动态效果系统检查 | 未执行 | 源码保留语义布局与系统材质，展开动画读取减少动态效果；不以源码审查代替实际系统验收 |
+| Duo 展开、书本式、支架、iPad 窄窗、最低系统及第三方导入 | 未执行 | 不沿用旧截图或旧客户端验证作为改版通过证据 |
+
+回归中发现并修正了端口被本地化显示为 `1,080`、最大字号滚动手势落在操作区、返回按钮位于 Duo 侧边而非 navigation bar、输入控件被 UIKit 分类为不同类型、中文输入法可能将测试路径 `/` 转为 `、`、以及窗口标题栏拖动被系统提示遮挡的问题。测试路径改用粘贴并逐字断言，系统保存取消兼容下拉关闭，截图与导出均只使用虚构示例节点。
+
+部分中止的 XCTest 会话停留在诊断收集，随后清理了本次测试进程。未完整生成 Info.plist 的结果目录不作为有效结果包；相应命令与诊断日志保留在 `.build/validation/glass-20261009/`。原生图片分享的旧 UIKit 呈现路径未完成面板显示，最终采用 popover 内的系统 ShareLink，并在 iPhone 与 Duo 实际打开原生分享面板。
+
+上述初版按视口及摘要高度缩放二维码，只影响屏幕展示、不重新编码 PNG。该策略随后被发现会随滚动改变尺寸，已由下方“二维码滚动尺寸修复”替代；旧首屏范围断言与静态回读不覆盖滚动稳定性。独立操作区仍占用真实布局空间，图片相关操作由二维码生成状态单独决定。
+
+最终截图：`Preview/glass-iphone-qr.png`、`glass-iphone-dark-share.png`、`glass-iphone-json-accessibility.png`、`glass-duo-qr.png`、`glass-duo-rtl-json.png`、`glass-ipad-json.png`、`glass-ipad-json-accessibility.png`、`glass-mac-minimum-yaml.png`、`glass-mac-minimum-json.png`。窗口遮挡及未完成项仍按表中边界记录；不以多轮通过项合并成某个完整测试包通过。
+
+
+## 2026-10-09 — 二维码滚动尺寸修复
+
+用户在 Duo 紧凑视口观察到滚动后二维码变大。此前 iOS 工作区将可用视口高度减去摘要高度作为二维码上限；导航栏随滚动改变可用高度时，图片上限也随之变化。现移除高度测量，以内容宽度约束二维码，最大 320 pt。竖向空间不足时滚动查看，滚动和详情展开不参与图片尺寸计算；PNG 原始像素、编码与导出路径不变。
+
+新增 `testQRCodeSizeRemainsStableWhileScrolling`，验证内容实际上移、二维码宽高不变、底部保存操作可达，再反向滚动验证尺寸仍一致。完整可见性用例改为滚动后检查，短视口不再要求摘要与完整二维码同时挤入首屏。
+
+| 检查 | 状态 | 本次证据与边界 |
+| --- | --- | --- |
+| iOS Debug 应用及 UI 测试编译 | 通过 | `build-for-testing` 返回 0，`proxy-qr-scroll-build.log` 为 `TEST BUILD SUCCEEDED` |
+| Duo 上下滚动尺寸回归与截图回读 | 通过 | iPhone Duo / iOS 27.1，`QR-Scroll-Duo-20261009.xcresult` 中 1 项 UI、0 失败；实际向上 / 向下滚动，宽高差不超过 1 pt，保存按钮可达。独立 Vision 从滚动后截图解出完整示例链接，`duo-readback.json` 为 `payloadMatchesExample: true` |
+| iPhone 上下滚动及完整可见性 | 通过 | iPhone 17 Pro / iOS 26.5，`QR-Scroll-iPhone-20261009.xcresult` 中 2 项 UI、0 失败；向上 / 向下滚动宽高不变，滚动后图片四边均在可视范围内；独立 Vision 回读完整示例链接通过，`iphone-readback.json` 为 `payloadMatchesExample: true` |
+| PNG 重新保存、Mac / iPad / RTL / 大字体 | 未执行 | 本次为 iOS 展示尺寸修复，未以旧结果代替本轮执行 |
+
+本轮日志与附件保留在 `.build/validation/qr-scroll-20261009/`，Duo 新截图为 `Preview/glass-duo-qr-before-scroll.png`（初始位置）与 `Preview/glass-duo-qr.png`（滚动后完整二维码）；`Preview/glass-iphone-qr.png` 亦替换为本轮 iPhone 滚动后截图。`git diff --check` 通过。

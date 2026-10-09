@@ -15,30 +15,59 @@ struct ContentView: View {
             if let node = session.node {
                 NodeDetailView(session: session, node: node)
             } else {
-                ContentUnavailableView("准备好你的下一条连接", systemImage: "network",
-                                       description: Text("输入一条 SOCKS 链接，即可生成二维码、Shadowrocket JSON 和 Clash 配置。"))
+                WorkspaceEmptyView()
             }
         }
         .frame(minWidth: 760, minHeight: 560)
         .focusedSceneValue(\.proxySession, session)
         .background(OutputEscapeHandler(session: session))
         .toolbar {
-            ToolbarItemGroup {
+            ToolbarItem {
                 Button("清空", systemImage: "trash") { session.clear() }
                     .disabled(!session.canClear)
                     .help("清空当前窗口（⇧⌘⌫）")
                     .accessibilityIdentifier("clearInput")
-                Menu {
-                    Button("保存 PNG…") { session.exportPNG() }
-                        .disabled(session.qrImage == nil)
-                    Button("导出 Clash 配置…") { session.exportYAML() }
-                    Button("导出 Shadowrocket JSON…") { session.exportJSON() }
-                } label: {
-                    Label("导出", systemImage: "square.and.arrow.down")
-                }
-                .disabled(!session.canUseOutput)
-                .help("导出当前节点")
             }
+            ToolbarSpacer(.fixed)
+            ToolbarItem {
+                if session.node != nil {
+                    Button(session.output.exportTitle, systemImage: "square.and.arrow.down") { session.exportCurrent() }
+                        .buttonStyle(.glassProminent)
+                        .disabled(!session.canExportCurrent)
+                        .accessibilityIdentifier(session.output.exportIdentifier)
+                }
+            }
+            ToolbarItem {
+                if session.node != nil {
+                    if session.output == .qr {
+                        OutputShareButton(image: session.qrImage, link: session.shareLink,
+                                          isEnabled: session.canUseOutput)
+                    } else {
+                        Button("复制文本", systemImage: "doc.on.doc") {
+                            guard let text = session.outputText else { return }
+                            NSPasteboard.general.clearContents()
+                            if NSPasteboard.general.setString(text, forType: .string) {
+                                session.copyFeedback = "已复制。"
+                            }
+                        }
+                        .disabled(!session.canUseOutput || session.outputText == nil)
+                        .accessibilityIdentifier("copyOutput")
+                    }
+                }
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let feedback = session.copyFeedback {
+                Text(feedback).font(.callout).padding(12)
+                    .background(WorkspaceStyle.surface, in: Capsule())
+                    .padding(16).accessibilityIdentifier("copyFeedback")
+            }
+        }
+        .task(id: session.copyFeedback) {
+            guard session.copyFeedback != nil else { return }
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            session.copyFeedback = nil
         }
         .fileExporter(isPresented: $session.isExporting, document: session.exportDocument,
                       contentTypes: [session.exportType], defaultFilename: session.exportName,

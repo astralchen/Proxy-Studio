@@ -2,7 +2,7 @@
 
 ## 工程结构与模块职责
 
-`ProxyStudio.xcodeproj` 提供独立 app target 与同名共享 Scheme：`ProxyStudio`（iOS）、`ProxyStudioMac`（原生 macOS）。应用源码位于 `ProxyStudio/`：`Core/` 负责 SOCKS 解析与 Clash YAML 生成；`Services/` 负责平台无关的二维码与文件文档；`Platforms/iOS/`、`Platforms/macOS/` 分别存放平台入口、界面和图片分享适配，Mac 窗口会话在 `Stores/ProxySession.swift`；`Platforms/Resources/Assets.xcassets/` 存放颜色及图标。共享单元测试在 `ProxyStudioTests/`，iOS UI 测试在 `ProxyStudioUITests/`，Mac 专属测试在 `ProxyStudioMacTests/`、`ProxyStudioMacUITests/`。通过同步目录的 target membership 选择源码，平台专属文件不添加 `Mac` 类型前缀或 `#if os(...)` 包装。设计原稿在 `Design/`，截图在 `Preview/`。开发前阅读 `README.md`、`REQUIREMENTS.md` 和 `VALIDATION.md`。
+`ProxyStudio.xcodeproj` 提供独立 app target 与同名共享 Scheme：`ProxyStudio`（iOS）、`ProxyStudioMac`（原生 macOS）。应用源码位于 `ProxyStudio/`：`Core/` 负责 SOCKS 解析与 Clash YAML 生成；`Services/` 负责平台无关的二维码与文件文档；`Platforms/iOS/`、`Platforms/macOS/` 分别存放平台入口、界面和图片分享适配，两平台各自的窗口会话在所属目录的 `Stores/ProxySession.swift`，通用工作区视图在 `Platforms/Shared/`；`Platforms/Resources/Assets.xcassets/` 存放颜色及图标。共享单元测试在 `ProxyStudioTests/`，iOS UI 测试在 `ProxyStudioUITests/`，Mac 专属测试在 `ProxyStudioMacTests/`、`ProxyStudioMacUITests/`。通过同步目录的 target membership 选择源码，平台专属文件不添加 `Mac` 类型前缀或 `#if os(...)` 包装。设计原稿在 `Design/`，截图在 `Preview/`。开发前阅读 `README.md`、`REQUIREMENTS.md` 和 `VALIDATION.md`。
 
 ## 构建、测试与本地运行
 
