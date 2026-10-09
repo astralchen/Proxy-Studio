@@ -1,32 +1,44 @@
 import SwiftUI
 
-/// 显示节点摘要及二维码、即时 YAML 两种输出。
+/// 显示节点摘要及二维码、即时 YAML 和 JSON 输出。
 struct NodeDetailView: View {
     @Bindable var session: ProxySession
     let node: ProxyNode
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                summary
-                Divider()
-                Picker("输出格式", selection: $session.output) {
-                    ForEach(ProxySession.Output.allCases) { output in
-                        Text(output.rawValue).tag(output)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    summary
+                    Divider()
+                    Picker("输出格式", selection: $session.output) {
+                        ForEach(ProxySession.Output.allCases) { output in
+                            Text(output == .json && geometry.size.width < 560 ? "JSON" : output.rawValue)
+                                .accessibilityLabel(output.rawValue)
+                                .tag(output)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .disabled(!session.canUseOutput)
+                    .accessibilityIdentifier("outputPicker")
+                    Toggle("启用 UDP", isOn: $session.udpEnabled)
+                        .toggleStyle(.switch)
+                        .accessibilityIdentifier("udpToggle")
+                        .disabled(!session.canUseOutput)
+                    Text("UDP 用于 Shadowrocket 二维码、JSON 和 Clash YAML。未指定时默认关闭，确认服务端支持后再开启。")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    switch session.output {
+                    case .qr: qrOutput
+                    case .yaml: yamlOutput
+                    case .json: jsonOutput
                     }
                 }
-                .pickerStyle(.segmented)
-                .disabled(!session.canUseOutput)
-                .accessibilityIdentifier("outputPicker")
-                if session.output == .qr {
-                    qrOutput
-                } else {
-                    yamlOutput
-                }
+                .frame(width: max(0, min(1000, geometry.size.width - 56)), alignment: .leading)
+                .padding(28)
+                .frame(maxWidth: .infinity)
             }
-            .padding(28)
-            .frame(maxWidth: 1000, alignment: .leading)
-            .frame(maxWidth: .infinity)
         }
         .navigationTitle("节点工作区")
     }
@@ -114,9 +126,9 @@ struct NodeDetailView: View {
                 }
             } else {
                 ContentUnavailableView("二维码生成失败", systemImage: "qrcode",
-                                       description: Text("链接可能超过二维码容量，仍可分享链接或导出 YAML。"))
+                                       description: Text("链接可能超过二维码容量，仍可分享链接或导出 JSON、YAML。"))
             }
-            ShareLink(item: node.shareLink) {
+            ShareLink(item: session.shareLink) {
                 Label("分享导入链接", systemImage: "link")
             }
             .disabled(!session.canUseOutput)
@@ -141,16 +153,12 @@ struct NodeDetailView: View {
     private var yamlOutput: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Toggle("启用 UDP", isOn: $session.udpEnabled)
-                    .toggleStyle(.switch)
-                    .accessibilityIdentifier("udpToggle")
-                    .disabled(!session.canUseOutput)
                 Spacer()
                 Button("导出 Clash 配置…", systemImage: "square.and.arrow.down") { session.exportYAML() }
                     .disabled(!session.canUseOutput)
                     .accessibilityIdentifier("exportYAML")
             }
-            Text("UDP 默认关闭，确认服务端支持后再开启。配置提供“代理选择”与 DIRECT；进入 Clash 的流量按所选策略转发。")
+            Text("配置提供“代理选择”与 DIRECT；进入 Clash 的流量按所选策略转发。")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Text(session.yaml)
@@ -167,4 +175,32 @@ struct NodeDetailView: View {
                 .accessibilityIdentifier("yamlPreview")
         }
     }
+
+    private var jsonOutput: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Button("导出 JSON…", systemImage: "square.and.arrow.down") { session.exportJSON() }
+                .disabled(!session.canUseOutput)
+                .accessibilityIdentifier("exportJSON")
+            Text("JSON 使用 Shadowrocket 单节点导出格式，包含节点账号和密码，请妥善保存并确认导入入口支持该格式。")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if let json = session.json {
+                Text(json)
+                    .font(.system(.callout, design: .monospaced))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(18)
+                    .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Shadowrocket JSON 配置")
+                    .accessibilityValue(json)
+                    .accessibilityAddTraits(.isStaticText)
+                    .accessibilityIdentifier("jsonPreview")
+            } else {
+                ContentUnavailableView("无法生成 JSON 文件。", systemImage: "doc.badge.ellipsis")
+            }
+        }
+    }
+
 }

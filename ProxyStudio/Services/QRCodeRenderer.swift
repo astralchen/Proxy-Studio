@@ -10,7 +10,7 @@ enum QRCodeRenderer {
 
     /// 将字符串编码为带白色静区的二维码。
     ///
-    /// 使用 UTF-8 编码和 M 级纠错。二维码每个模块按 10 倍整数比例放大，
+    /// 使用 UTF-8 编码和 H 级纠错，与 Shadowrocket 导出样本一致。每个模块按 10 倍整数比例放大，
     /// 四周额外保留四个模块宽的白色静区，导出的 PNG 也包含该区域。
     ///
     /// - Parameter text: 要编码的完整文本。
@@ -18,7 +18,7 @@ enum QRCodeRenderer {
     static func image(for text: String) -> QRCodeImage? {
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(text.utf8)
-        filter.correctionLevel = "M"
+        filter.correctionLevel = "H"
         guard let output = filter.outputImage else { return nil }
         // 将静区合成到图片本身，确保脱离界面背景后仍保留可扫描的留白。
         let bounds = output.extent.insetBy(dx: -4, dy: -4)

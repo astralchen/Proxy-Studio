@@ -6,10 +6,11 @@ import UniformTypeIdentifiers
 @MainActor
 @Observable
 final class ProxySession {
-    /// 输出工作区的两个标签。
+    /// 输出工作区的三个标签。
     enum Output: String, CaseIterable, Identifiable {
         case qr = "二维码"
         case yaml = "Clash YAML"
+        case json = "Shadowrocket JSON"
         var id: Self { self }
     }
 
@@ -18,6 +19,8 @@ final class ProxySession {
         didSet {
             guard input != oldValue else { return }
             node = nil
+            nodeIdentifier = nil
+            nodeCreatedAt = nil
             parseError = nil
             qrImage = nil
             revealPassword = false
@@ -26,14 +29,25 @@ final class ProxySession {
     }
     /// 最近一次成功解析的节点。
     private(set) var node: ProxyNode?
+    /// 当前节点的稳定身份；无节点时为 `nil`。
+    private(set) var nodeIdentifier: UUID?
+    /// 当前节点成功解析的时间；无节点时为 `nil`。
+    private(set) var nodeCreatedAt: Date?
     /// 当前解析错误，不包含原始链接或密码。
     private(set) var parseError: String?
     /// 当前节点生成的二维码，编码失败时为 `nil`。
     private(set) var qrImage: QRCodeImage?
     /// 是否显示密码；切换节点后重置。
     var revealPassword = false
-    /// Clash UDP 选项；切换节点后重置。
-    var udpEnabled = false
+    /// 二维码、JSON 与 Clash 共用的 UDP 选项；新节点使用链接中的初始值。
+    var udpEnabled = false {
+        didSet {
+            guard udpEnabled != oldValue else { return }
+            qrImage = node.flatMap { QRCodeRenderer.image(for: $0.shadowrocketLink(udpEnabled: udpEnabled)) }
+        }
+    }
+    /// 当前导出选项对应的链接；与二维码载荷完全一致。
+    var shareLink: String { node?.shadowrocketLink(udpEnabled: udpEnabled) ?? "" }
     /// 当前输出标签；调整布局不会重置。
     var output: Output = .qr
     /// 当前导出的不可变内容快照。
@@ -56,21 +70,34 @@ final class ProxySession {
     /// 根据当前 UDP 选项生成原始 YAML，不包含视觉换行。
     var yaml: String { node.map { ClashConfiguration(node: $0, udpEnabled: udpEnabled).yaml } ?? "" }
 
+    /// 当前 JSON 的原始字节；无节点或编码失败时为 `nil`。
+    var jsonData: Data? {
+        guard let node, let nodeIdentifier, let nodeCreatedAt else { return nil }
+        return try? ShadowrocketConfiguration(node: node, udpEnabled: udpEnabled,
+                                              identifier: nodeIdentifier, createdAt: nodeCreatedAt).encodedJSON()
+    }
+    /// 当前 JSON 文本，不包含视觉换行；编码失败时为 `nil`。
+    var json: String? { jsonData.map { String(decoding: $0, as: UTF8.self) } }
+
     /// 用当前输入解析节点，并在新节点出现时重置详情选项。
     func parse() {
         guard canParse else { return }
         do {
             let parsed = try ProxyNode.parse(input)
             if parsed != node {
+                nodeIdentifier = UUID()
+                nodeCreatedAt = Date()
                 revealPassword = false
-                udpEnabled = false
+                udpEnabled = parsed.udpEnabled
                 output = .qr
             }
             node = parsed
             parseError = nil
-            qrImage = QRCodeRenderer.image(for: parsed.shareLink)
+            qrImage = QRCodeRenderer.image(for: shareLink)
         } catch {
             node = nil
+            nodeIdentifier = nil
+            nodeCreatedAt = nil
             qrImage = nil
             parseError = error.localizedDescription
         }
@@ -81,6 +108,8 @@ final class ProxySession {
         guard canClear else { return }
         input = ""
         node = nil
+        nodeIdentifier = nil
+        nodeCreatedAt = nil
         parseError = nil
         qrImage = nil
         revealPassword = false
@@ -93,6 +122,16 @@ final class ProxySession {
     func exportYAML() {
         guard canUseOutput else { return }
         prepareExport(data: Data(yaml.utf8), type: UTType(filenameExtension: "yaml") ?? .plainText, name: "clash.yaml")
+    }
+
+    /// 捕获当前 JSON 的字节快照，编码成功后打开系统保存面板。
+    func exportJSON() {
+        guard canUseOutput else { return }
+        guard let data = jsonData else {
+            message = "无法生成 JSON 文件。"
+            return
+        }
+        prepareExport(data: data, type: .json, name: "shadowrocket.json")
     }
 
     /// 编码当前二维码，成功后打开系统保存面板。

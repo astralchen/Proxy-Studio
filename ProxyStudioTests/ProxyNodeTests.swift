@@ -1,6 +1,7 @@
 import XCTest
 import Vision
 import ImageIO
+import CoreImage
 @testable import ProxyStudio
 
 /// 验证链接解析、配置序列化与二维码内容的一致性。
@@ -15,6 +16,60 @@ final class ProxyNodeTests: XCTestCase {
         XCTAssertEqual(node.username, "demo")
         XCTAssertEqual(node.password, "example-password")
         XCTAssertEqual(node.port, 1080)
+    }
+
+    /// 使用独立的虚构契约样本验证整体 Base64、remarks 和 UDP 类型。
+    func testShadowrocketLinkContract() throws {
+        let node = try ProxyNode.parse(ProxyNode.exampleLink)
+        let expected = "socks://" + Data("demo:example-password@proxy.example.com:1080".utf8).base64EncodedString()
+            + "?remarks=%E7%A4%BA%E4%BE%8B%E8%8A%82%E7%82%B9&udp=1"
+        XCTAssertEqual(node.shadowrocketLink(udpEnabled: true), expected)
+        let parsed = try ProxyNode.parse(expected)
+        XCTAssertEqual(parsed.name, node.name)
+        XCTAssertEqual(parsed.host, node.host)
+        XCTAssertEqual(parsed.port, node.port)
+        XCTAssertEqual(parsed.username, node.username)
+        XCTAssertEqual(parsed.password, node.password)
+        XCTAssertTrue(parsed.udpEnabled)
+        XCTAssertEqual(parsed.shareLink, expected)
+        XCTAssertFalse(try ProxyNode.parse(node.shareLink).udpEnabled)
+    }
+
+    /// 验证完整连接信息中的特殊凭据与查询名称不会被二次转义或错误拆分。
+    func testShadowrocketSpecialCharactersAndAddressBoundaries() throws {
+        for (host, port) in [("proxy.example.com", 1), ("127.0.0.1", 65535), ("[2001:db8::1]", 1080)] {
+            for authenticated in [false, true] {
+                let node = ProxyNode(name: "中文 +&?#=\"\\节点", host: host, port: port,
+                                     username: authenticated ? "用@户/名%+" : nil,
+                                     password: authenticated ? "密:码@?/#%+\"\\" : nil, udpEnabled: true)
+                XCTAssertEqual(try ProxyNode.parse(node.shareLink), node)
+                XCTAssertEqual(try ProxyNode.parse(node.shareLink).shareLink, node.shareLink)
+                XCTAssertFalse(node.shareLink.contains("#"))
+                XCTAssertTrue(node.shareLink.contains("%2B%26%3F%23%3D"))
+            }
+        }
+    }
+
+    /// 保留 Base64URL 输入兼容性，并拒绝重复、冲突或未知连接选项。
+    func testShadowrocketBase64URLAndInvalidOptions() throws {
+        let encoded = Data("user:pass?~@[2001:db8::2]:65535".utf8).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        let base = "socks5://" + encoded
+        let node = try ProxyNode.parse(base + "?remarks=中文%2B节点&udp=1")
+        XCTAssertEqual(node.name, "中文+节点")
+        XCTAssertEqual(node.password, "pass?~")
+        XCTAssertTrue(node.udpEnabled)
+        XCTAssertFalse(try ProxyNode.parse(base).udpEnabled)
+        XCTAssertEqual(try ProxyNode.parse(base + "?remarks=").name, "SOCKS5 节点")
+        for suffix in ["?tls=true", "?udp=true", "?udp=2", "?udp=", "?udp", "?udp=0&udp=1",
+                       "?remarks=a&remarks=b", "?remarks=a#b", "?", "?remarks=bad%0Aname"] {
+            XCTAssertThrowsError(try ProxyNode.parse(base + suffix))
+        }
+        for endpoint in ["user:@host:1080", ":pass@host:1080", "user:pass@host:0", "host:65536",
+                         "user:pass@host:1080/path", "user:pass@bad host:1080", "user:pass\n@host:1080"] {
+            XCTAssertThrowsError(try ProxyNode.parse("socks://" + Data(endpoint.utf8).base64EncodedString()))
+        }
     }
 
     /// 验证转义的冒号和 @ 符号不改变链接的解析结果。
@@ -88,6 +143,8 @@ final class ProxyNodeTests: XCTestCase {
         request.usesCPUOnly = true
         try VNImageRequestHandler(cgImage: cgImage).perform([request])
         XCTAssertEqual(request.results?.first?.payloadStringValue, node.shareLink)
+        let descriptor = try XCTUnwrap(request.results?.first?.barcodeDescriptor as? CIQRCodeDescriptor)
+        XCTAssertEqual(descriptor.errorCorrectionLevel, .levelH)
         XCTAssertGreaterThan(cgImage.width, 200)
         XCTAssertEqual(cgImage.width, cgImage.height)
         XCTAssertEqual(cgImage.width, image.cgImage.width)

@@ -16,11 +16,12 @@ struct ContentView: View {
                 NodeDetailView(session: session, node: node)
             } else {
                 ContentUnavailableView("准备好你的下一条连接", systemImage: "network",
-                                       description: Text("输入一条 SOCKS 链接，即可生成二维码和 Clash 配置。"))
+                                       description: Text("输入一条 SOCKS 链接，即可生成二维码、Shadowrocket JSON 和 Clash 配置。"))
             }
         }
         .frame(minWidth: 760, minHeight: 560)
         .focusedSceneValue(\.proxySession, session)
+        .background(OutputEscapeHandler(session: session))
         .toolbar {
             ToolbarItemGroup {
                 Button("清空", systemImage: "trash") { session.clear() }
@@ -31,16 +32,12 @@ struct ContentView: View {
                     Button("保存 PNG…") { session.exportPNG() }
                         .disabled(session.qrImage == nil)
                     Button("导出 Clash 配置…") { session.exportYAML() }
+                    Button("导出 Shadowrocket JSON…") { session.exportJSON() }
                 } label: {
                     Label("导出", systemImage: "square.and.arrow.down")
                 }
                 .disabled(!session.canUseOutput)
                 .help("导出当前节点")
-            }
-        }
-        .onExitCommand {
-            if session.canUseOutput, session.output == .yaml, session.message == nil {
-                session.output = .qr
             }
         }
         .fileExporter(isPresented: $session.isExporting, document: session.exportDocument,

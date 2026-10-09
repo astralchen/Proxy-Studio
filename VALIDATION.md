@@ -1,6 +1,6 @@
 # 验证记录
 
-验证时间：2026-10-08。本文按增量保留历史证据；当前双平台交付结果见“原生 macOS 交付验证”与“本次 iOS 回归”。以下首张表是早期 iOS 验证记录。完整测试套件在 YAML 预览换行修正前通过；核心解析、二维码与导出逻辑此后未变。换行修正后的最终源码已通过 iOS 26.5 和 27.1 SDK 编译；最终界面回归在模拟器启动与事件监控阶段被环境阻塞。
+验证时间：2026-10-08、2026-10-09。本文按增量保留历史证据；Shadowrocket JSON 的最新结果见文末“Shadowrocket JSON 增量验证”。此前双平台结果见“原生 macOS 交付验证”与“本次 iOS 回归”。以下首张表是早期 iOS 验证记录。完整测试套件在 YAML 预览换行修正前通过；核心解析、二维码与导出逻辑此后未变。换行修正后的最终源码已通过 iOS 26.5 和 27.1 SDK 编译；最终界面回归在模拟器启动与事件监控阶段被环境阻塞。
 
 | 项目 | 结果 | 证据与边界 |
 | --- | --- | --- |
@@ -172,3 +172,88 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
 ```
 
 截图仅包含被测 app 窗口和虚构凭据；结果包路径再次运行时应换为不存在的新目录。
+
+
+## Shadowrocket JSON 增量验证（2026-10-09）
+
+本次实现 iOS 与原生 macOS 当前单个 SOCKS5 节点的 JSON 预览和系统文件导出。格式契约来自已确认的单节点分享 / 导出样本：顶层对象、41 个字段，未改为数组。原文件仅用于检查字段与类型，示例、测试、截图及客户端验证均重新使用虚构节点 `proxy.example.com:1080` / `demo` / `example-password`。不增加 JSON 输入、批量节点或持久化。
+
+JSONEncoder 使用 UTF-8、缩进、排序键及末尾换行；UUID 和创建时间由新节点所属详情 / 窗口会话生成，同一节点的预览、UDP 切换和重复导出保留元数据。预览与保存使用相同编码器，保存前捕获不可变字节快照。两平台共享 UDP 默认关闭；文件名为 `shadowrocket.json`、类型为 `.json`。Mac 的 Escape 由当前窗口的窄 AppKit 适配处理，原生保存面板和结果提示优先响应。
+
+本机使用 Xcode 27.1（27A9269）、macOS 27.0.1（26A434）。iPhone Duo 运行 iOS 27.1；iPad Pro 11-inch (M5) 使用本机可用的 iOS 26.5。基础提交为 `13251d2`，本次为未提交变更。源码、工程和测试摘要保存在 `.build/validation/json-20261009/source-snapshot.json`；日志和原始附件位于同目录，结果包位于 `.build/results/JSON-*.xcresult`。`.build/` 与临时回读文件为本地证据，不提交。
+
+| 项目 | 结果 | 证据与边界 |
+| --- | --- | --- |
+| iOS Simulator Debug 构建 | 通过 | generic iOS Simulator，`.build/validation/json-20261009/ios-build.log`，`BUILD SUCCEEDED` |
+| iOS 共享单元测试与 JSON UI 最终增量套件 | 通过 | 16 项共享单元测试与 3 项 JSON UI 测试全部通过，0 failed；`JSON-iOS-Complete-20261009.xcresult`、`ios-complete.log`。原有 YAML 保存 / 旋转 UI 测试不在本次增量套件中，其历史失败记录保留 |
+| JSON 字段、类型与确定性 | 通过 | JSONSerialization 验证顶层对象、完整键集合、字符串 / 整数 / 浮点类型，覆盖认证和免认证、IPv4 / 域名 / IPv6、1 / 65535 端口、中文及特殊凭据、UDP 0 / 1、固定元数据、重复编码及非法时间抛错 |
+| iPhone Duo 最大辅助功能字号预览 | 通过 | `testJSONPreviewAtAccessibilityTextSize`；可见等宽文本按可用宽度换行，“完成”可点击；原始附件见 `ios-attachments/` |
+| iPhone Duo JSON 实际保存与回读 | 通过 | `testJSONSaveSuccess` 到达系统保存面板并收到“文件已保存。”；File Provider Storage 的实际文件为 821 bytes，与 xcresult 内“iOS-JSON-预览原始字节”附件逐字节相等，也与当前编码器重建结果相等；`file-readback.txt`、`ios-file-readback.json`；最终套件另外写入唯一文件名的 821-byte 文件，再与本次预览附件逐字节比较，记录 `ios-file-readback-final.json` |
+| Mac 实际保存与实际写入失败 | 通过 | `testJSONActualSaveAndReadOnlyFailure`：系统面板写入文件与预览字节一致；chmod 555 的独立测试目录写入失败，实际显示保存失败提示且未生成文件，节点与 JSON 保留；测试结束恢复目录权限。`JSON-Mac-Complete-20261009.xcresult` 与 `mac-complete.log` |
+| Mac 本地构建与启动 | 通过 | 最终 `./script/build_and_run.sh --verify` 返回 0；`mac-run-final.log` 包含 `BUILD SUCCEEDED`，原生 app 已启动并实际通过 ⌘↩ / ⌘3 显示虚构示例 JSON |
+| Mac 原生构建及单元测试 | 通过 | 最终源码完成 26 项单元测试（共享 16、窗口会话 10）；`JSON-Mac-Complete-20261009.xcresult`，`mac-complete.log` |
+| Mac JSON 快捷键、共享 UDP、取消与多窗口 | 通过 | 最终功能版本 JSON 即时预览 / 稳定 UUID、⌘3、JSON / YAML 共享 UDP、保存面板 Escape 优先及关闭后 Escape 返回二维码均通过；最终完整套件 7 项 UI 通过；尺寸测试的高度拖动未生效，窗口仍为 812 pt，该次完整套件为 33 passed / 1 failed。JSON 及 Escape 功能断言均通过，尺寸检查独立重验记录见下一行 |
+| Mac 最小窗口布局 | 通过 | 窗口外框 760×612 pt，侧栏恢复到 380 pt 时 JSON 标签简写以容纳三项输出；辅助功能名称保留全称。预览、标签和导出按钮的水平范围均位于窗口内，UDP、密码和节点不变；`JSON-Mac-Resize-Verified-20261009.xcresult`、`mac-resize-verified.log`；最后仅调整测试窗口初始位置，避免底边不可达，实际宽高变化及全部范围断言通过 |
+| iPhone Duo JSON / YAML 共享 UDP 与保存取消 | 通过 | `JSON-iOS-Complete-20261009.xcresult`，`ios-complete.log`；取消不显示提示，重开预览与原快照逐字相同 |
+| iPad JSON 预览、大字体与保存取消 | 通过 | 最大辅助功能字号在 `JSON-iPad-Delivery-20261009.xcresult` 中通过；标准字号取消流程在 `JSON-iPad-Verified-20261009.xcresult` 中通过。使用实际左右滚动容器，iOS 26.5 的保存按钮使用观察到的“保存”名称查询；未以只到面板认定保存成功 |
+| Shadowrocket 2.2.92 “数据 → 导入节点” | 失败 | 本机版本 2.2.92 / 3445，选中实际生成的 821-byte `shadowrocket.json` 后，原生 `OKButton` 仍禁用；双击只显示 JSON 预览，不导入。文件选择阶段未把内容交给解析器，不能推断是单对象结构被拒绝。取消后未添加节点或改变连接状态；`shadowrocket-compatibility.json` |
+| 客户端节点字段核对 | 未执行 | 上述入口未完成导入，无法核对客户端名称、协议、地址、端口、凭据与 UDP；保持单对象契约，不改为数组或其他扩展名 |
+| iOS 真机、其他 Duo 姿态、RTL / VoiceOver、macOS 26 / Intel | 未执行 | 当前模拟器和本机检查不代替上述验收 |
+
+首轮 iOS JSON / YAML 共享 UDP 测试点击了 SwiftUI 开关整行的中心，UDP 未开启，已改为点击右侧控件并断言开关值。随后一次 Duo 测试在等待保存面板时断言失败；测试补充等待预览退出，后续完整 JSON 流程通过，此项不据此认定失败的唯一原因。Mac 的测试还发现保存面板关闭后 Escape 的焦点路由缺口和最小窗口横向溢出：新增当前窗口键盘适配及容器宽度约束，并补充按钮 / 预览处于窗口水平范围内的断言。系统设置窗口遮挡的 UI 失败独立保留，不记作功能通过。
+
+iPad 首次自动化因手势落在另一侧分栏及查询未进入视口的控件而失败；已按左右容器滚动。其原生保存按钮的标识与 Duo 不同，面板实际存在但旧断言失败，改用观察到的“保存”按钮后取消流程通过。Mac 最小分栏中系统 segmented picker 的固有宽度仍超过分栏，隐藏重复标签并仅在窄分栏简写 JSON 名称后，范围断言与截图检查通过。新增 AppKit 文件显式排除 iOS target，修复初次未设置 membership 时的 iOS 编译失败。
+
+iOS 27.1 的 Xcode 测试结束后仍可能因 `invalidDigitCount(94401/94403)` 和模拟器诊断收集超时，延迟约 10 分钟才完成结果包。以实际 XCTest 日志和生成后的结果包记录结论，不把诊断延迟视为业务通过或失败。2026-10-08 的 YAML FileProvider “进行中”保存失败记录保持原文，本次 JSON 文件确实保存成功不覆盖该历史记录。
+
+复现命令（再次运行须为结果包使用新路径）：
+
+```sh
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
+  -destination 'platform=macOS' -derivedDataPath .build/json-mac \
+  -resultBundlePath .build/results/JSON-Mac-Complete-20261009.xcresult \
+  -parallel-testing-enabled NO CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual test
+xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
+  -destination 'platform=macOS' -derivedDataPath .build/json-mac \
+  -resultBundlePath .build/results/JSON-Mac-Resize-Verified-20261009.xcresult \
+  -parallel-testing-enabled NO \
+  -only-testing:ProxyStudioMacUITests/ProxyStudioMacUITests/testWindowResizeAndSidebarPreserveSession \
+  CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual test
+xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudio \
+  -destination 'platform=iOS Simulator,name=iPhone Duo' -derivedDataPath .build/json-ios \
+  -resultBundlePath .build/results/JSON-iOS-Complete-20261009.xcresult \
+  -parallel-testing-enabled NO \
+  -only-testing:ProxyStudioTests \
+  -only-testing:ProxyStudioUITests/ProxyStudioUITests/testJSONPreviewSharedUDPAndCancelExport \
+  -only-testing:ProxyStudioUITests/ProxyStudioUITests/testJSONPreviewAtAccessibilityTextSize \
+  -only-testing:ProxyStudioUITests/ProxyStudioUITests/testJSONSaveSuccess test
+```
+
+本次截图：`Preview/ios-shadowrocket-json.png`、`ios-shadowrocket-json-accessibility.png`、`ipad-shadowrocket-json.png`、`ipad-shadowrocket-json-accessibility.png`、`mac-shadowrocket-json.png`、`mac-shadowrocket-json-minimum.png`。截图经过实际查看，仅含应用窗口及虚构示例节点。
+
+
+## 2026-10-09 — Shadowrocket 二维码格式对齐
+
+本轮在已有 JSON 实现上调整二维码与分享链接，保留前文历史验证记录。输入范围仍为单条 SOCKS 链接，未增加图片识别或 JSON 输入。
+
+- 分享链接采用 `socks://Base64(用户名:密码@服务器:端口)?remarks=百分号编码名称&udp=0/1`；免认证时只编码服务器与端口，IPv6 使用方括号。旧的 Base64 认证字段、明文认证和片段名称仍可解析。整体 Base64 / Base64URL、特殊凭据、中文混合百分号名称及参数拒绝规则由单元测试覆盖。
+- 二维码改为 H 级纠错。导出选项在二维码、JSON、YAML 间共享，Mac 所有标签页均显示 UDP。新节点按链接参数初始化；缺省关闭。修改选项不刷新 JSON UUID 与时间，保存面板使用不可变 PNG 快照。
+- 与用户原图的脱敏比较 **通过**：链接载荷逐字节相同（116 字节）；纠错 H、版本 10、57×57 模块、掩码 7 一致。新输出 670×670 像素，每模块 10 像素、四边 50 像素白色静区；原图 1280×1280、四边 22 像素。保留足够静区，未复制原图的窄留边。真实节点仅在内存中用于比较，报告、测试与截图不保存其凭据。
+- Mac 最终共享/会话单元测试 **通过**：30 个、0 失败。包括解析兼容、PNG Vision 回读、H 纠错、UDP 实时更新、快照、取消及窗口会话隔离。
+- iOS 最终共享单元测试 **通过**：19 个、0 失败。JSON UDP 预览/取消及辅助功能最大字号两项 UI 回归 **通过**。
+- 实际 iOS PNG 保存与取消在首轮 UI 流程 **通过**，主机回读确认 14,271 字节、670×670、H 纠错，虚构节点载荷与预期相同。最终批次中的 PNG UI 测试在首次保存面板显示空弹出层、未找到系统保存按钮，记为 **失败**；单独复测 `QR-iOS-PNG-Final-20261009.xcresult` **通过**（1 项、0 失败），最终保存文件再次回读通过。不以重跑成功删除该历史失败记录。
+- 本机 Shadowrocket 2.2.92（3445）“扫描二维码 → 打开相册”验证 **被环境阻塞**：原生文件选择器选中了上述实际 PNG，但“打开”被禁用，双击没有导入。已取消，未创建测试节点或修改已有连接。客户端字段与导入完成验收 **未执行**；这不构成格式被客户端拒绝的结论。JSON 的历史入口失败记录继续保留。
+
+证据位于忽略目录 `.build/validation/qr-alignment-20261009/`：`comparison.json`、`ios-file-readback-initial.json`、`mac-file-readback.json`、`shadowrocket-client.json` 和构建/测试日志。首轮 `QR-Mac-Units-20261009.xcresult` 与 `QR-iOS-20261009.xcresult` 暴露中文与 `%2B` 混合名称二次编码失败，已修复并通过两平台最终单元测试；`QR-Mac-Verified-20261009.xcresult` 的 PNG UI 停在屏外开关值查询，手动中止（退出 75），修正测试后实际保存回读通过。最终结果包与截图在本节追加实际结论。
+
+- iOS 最终证据：`QR-iOS-Verified-20261009.xcresult` 为 19 单元 + 2 UI 通过、1 PNG UI 失败；`QR-iOS-PNG-Final-20261009.xcresult` 为 PNG UI 单独复测 1 项通过、0 失败。最终文件 `-qr-validation-8A482771.png` 回读 14,271 字节、H、670×670，报告 `ios-file-readback-final.json`。
+- Mac 实际 PNG 文件回读 **通过**：`mac-file-readback.json`。与最终 iOS 文件 SHA-256 相同（`0261d2eb5f790ae676732fd0f553da0af5fcdac41107098d005d740a3c7ff543`），逐字节相等，详见 `cross-platform-png.json`。已回读的虚构 PNG 在 `Preview/shadowrocket-example-qr.png`。
+- `QR-Mac-Final-20261009.xcresult` 中 30 单元及 JSON/Escape、PNG 实际保存两项 UI 已通过；窗口用例在缺失边栏文本框查询停滞，手动中止（退出 75）。截图发现 UI runner 的“文稿文件夹访问”系统提示遮挡，未授予额外权限。新增恢复前的存在性检查与单次点击重试，并将测试产物复制到 `/private/tmp/ProxyStudioQRValidation-20261009/Products` 从临时目录运行，避免文稿权限依赖。该次中止不能写为完整测试套件通过。
+
+- 从临时目录运行的最终 `QR-Mac-Temp-Verified-20261009.xcresult` **全部通过**：30 个单元测试、3 个 UI 测试、0 失败。UI 覆盖二维码标签修改 UDP、JSON 共享状态、系统 PNG 保存/取消及 Vision 回读、JSON 保存面板 Escape、760×560 最小内容窗口、文本换行和边栏恢复。最终截图无文稿权限遮挡，系统设置窗口仍被 XCTest 记录为短暂干扰，但本批次全部完成。
+- 本轮未重新执行 iPad、iOS 横屏/RTL/VoiceOver、最低 macOS 26 或 Intel 运行、真机相机扫码；这些项目为 **未执行**，不沿用旧记录作为二维码格式修改后的通过证据。
+
+- 最终原生 Mac 构建与启动 **通过**：`./script/build_and_run.sh --verify` 退出 0，日志 `mac-run-final.log` 为 `BUILD SUCCEEDED`；Computer Use 确认最终 `.build/run/Build/Products/Debug/Proxy Studio.app` 中示例节点、二维码、共享 UDP 关闭状态及 PNG 按钮可见。工程 plist 校验与 `git diff --check` **通过**。
+- 新增已检查的截图：`Preview/mac-shadowrocket-qr.png`、`Preview/mac-shadowrocket-shared-udp-minimum.png`。iOS 保存测试截图保留在结果附件，截图时二维码上缘滚动到可视区域之外，不将该截图作为完整二维码可见性通过证据；实际 PNG 完整性由保存回读核验。
+- 本次没有扩大系统文件夹权限，没有改动 Shadowrocket 已有节点或连接。源码哈希快照：`.build/validation/qr-alignment-20261009/source-snapshot.json`。

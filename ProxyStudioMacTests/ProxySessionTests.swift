@@ -1,8 +1,148 @@
 import XCTest
+import Vision
+import ImageIO
 @testable import ProxyStudio
 
 /// 验证 Mac 窗口的会话隔离、输入失效及导出快照契约。
 final class ProxySessionTests: XCTestCase {
+    /// 验证导入 UDP、实时二维码更新、PNG 快照及取消后状态一致性。
+    @MainActor
+    func testShadowrocketQRUsesSharedUDPAndImmutablePNGSnapshot() throws {
+        let session = ProxySession()
+        let node = try ProxyNode.parse(ProxyNode.exampleLink)
+        session.input = node.shadowrocketLink(udpEnabled: true)
+        session.parse()
+        XCTAssertTrue(session.udpEnabled)
+        XCTAssertEqual(try decodePNG(XCTUnwrap(session.qrImage?.pngData())), session.shareLink)
+        let original = session.shareLink
+        let identifier = session.nodeIdentifier
+        session.exportPNG()
+        let snapshot = try XCTUnwrap(session.exportDocument?.data)
+        XCTAssertEqual(try decodePNG(snapshot), original)
+        session.udpEnabled = false
+        XCTAssertNotEqual(session.shareLink, original)
+        XCTAssertEqual(try decodePNG(XCTUnwrap(session.qrImage?.pngData())), session.shareLink)
+        XCTAssertFalse(try ProxyNode.parse(session.shareLink).udpEnabled)
+        XCTAssertTrue(session.yaml.contains("udp: false"))
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(session.jsonData)) as? [String: Any])
+        XCTAssertEqual(json["udp"] as? Int, 0)
+        XCTAssertEqual(session.exportDocument?.data, snapshot)
+        XCTAssertEqual(session.nodeIdentifier, identifier)
+        session.cancelExport()
+        XCTAssertFalse(session.udpEnabled)
+        XCTAssertNil(session.message)
+        session.parse()
+        XCTAssertFalse(session.udpEnabled)
+        session.input = ProxyNode.exampleLink
+        session.parse()
+        XCTAssertFalse(session.udpEnabled)
+    }
+
+    @MainActor
+    private func decodePNG(_ data: Data) throws -> String {
+        let source = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
+        let image = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
+        let request = VNDetectBarcodesRequest()
+        request.symbologies = [.qr]
+        request.revision = VNDetectBarcodesRequestRevision1
+        request.usesCPUOnly = true
+        try VNImageRequestHandler(cgImage: image).perform([request])
+        return try XCTUnwrap(request.results?.first?.payloadStringValue)
+    }
+
+    @MainActor
+    func testJSONMetadataIsStableUntilNodeChanges() throws {
+        let session = ProxySession()
+        session.input = ProxyNode.exampleLink
+        session.parse()
+        let original = try XCTUnwrap(session.jsonData)
+        let identifier = session.nodeIdentifier
+        let createdAt = session.nodeCreatedAt
+        session.output = .json
+        session.output = .yaml
+        session.parse()
+        XCTAssertEqual(session.jsonData, original)
+        XCTAssertEqual(session.nodeIdentifier, identifier)
+        XCTAssertEqual(session.nodeCreatedAt, createdAt)
+        session.input = "socks://[2001:db8::1]:1080#second"
+        XCTAssertNil(session.jsonData)
+        session.parse()
+        XCTAssertNotEqual(session.nodeIdentifier, identifier)
+        XCTAssertFalse(session.udpEnabled)
+        XCTAssertEqual(session.output, .qr)
+    }
+
+    @MainActor
+    func testJSONAndYAMLShareUDPAndWindowsRemainIndependent() throws {
+        let first = ProxySession()
+        let second = ProxySession()
+        for session in [first, second] {
+            session.input = ProxyNode.exampleLink
+            session.parse()
+        }
+        XCTAssertNotEqual(first.nodeIdentifier, second.nodeIdentifier)
+        first.output = .json
+        first.udpEnabled = true
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(first.jsonData)) as? [String: Any])
+        XCTAssertEqual(json["udp"] as? Int, 1)
+        first.output = .yaml
+        XCTAssertTrue(first.yaml.contains("udp: true"))
+        XCTAssertFalse(second.udpEnabled)
+        XCTAssertEqual(second.output, .qr)
+        first.clear()
+        XCTAssertNil(first.jsonData)
+        XCTAssertNil(first.nodeIdentifier)
+        XCTAssertNotNil(second.jsonData)
+    }
+
+    @MainActor
+    func testJSONSnapshotAndCancellationPreserveSession() throws {
+        let session = ProxySession()
+        session.input = ProxyNode.exampleLink
+        session.parse()
+        session.output = .json
+        session.udpEnabled = true
+        session.revealPassword = true
+        let expected = try XCTUnwrap(session.jsonData)
+        session.exportJSON()
+        XCTAssertEqual(session.exportName, "shadowrocket.json")
+        XCTAssertEqual(session.exportType, .json)
+        XCTAssertEqual(session.exportDocument?.data, expected)
+        XCTAssertFalse(session.canParse)
+        XCTAssertFalse(session.canUseOutput)
+        session.udpEnabled = false
+        XCTAssertEqual(session.exportDocument?.data, expected)
+        session.udpEnabled = true
+        session.cancelExport()
+        XCTAssertNil(session.message)
+        XCTAssertNil(session.exportDocument)
+        XCTAssertNotNil(session.node)
+        XCTAssertTrue(session.udpEnabled)
+        XCTAssertTrue(session.revealPassword)
+        XCTAssertEqual(session.output, .json)
+    }
+
+    @MainActor
+    func testJSONSaveSuccessFailureAndUserCancelledFeedback() {
+        let session = ProxySession()
+        session.exportJSON()
+        XCTAssertFalse(session.isExporting)
+        session.input = ProxyNode.exampleLink
+        session.parse()
+        session.exportJSON()
+        session.finishExport(.success(URL(fileURLWithPath: "/tmp/shadowrocket.json")))
+        XCTAssertEqual(session.message, "文件已保存。")
+        session.exportJSON()
+        XCTAssertNil(session.message)
+        session.finishExport(.failure(CocoaError(.fileWriteNoPermission)))
+        XCTAssertTrue(session.message?.hasPrefix("保存失败：") == true)
+        XCTAssertNotNil(session.node)
+        session.exportJSON()
+        session.finishExport(.failure(CocoaError(.userCancelled)))
+        XCTAssertNil(session.message)
+        XCTAssertNil(session.exportDocument)
+    }
+
     @MainActor
     func testEditingInvalidatesNodeAndError() {
         let session = ProxySession()

@@ -32,10 +32,19 @@ struct ProxyCommands: Commands {
             Button("显示 Clash YAML") { session?.output = .yaml }
                 .keyboardShortcut("2")
                 .disabled(session?.canUseOutput != true)
+            Button("显示 Shadowrocket JSON") { session?.output = .json }
+                .keyboardShortcut("3")
+                .disabled(session?.canUseOutput != true)
+            // 与当前窗口键盘适配共用返回二维码的操作。
+            Button("返回二维码") { session?.output = .qr }
+                .keyboardShortcut(.escape, modifiers: [])
+                .disabled(session?.canUseOutput != true || session?.output == .qr || session?.message != nil)
             Divider()
             Button("保存 PNG…") { session?.exportPNG() }
                 .disabled(session?.canUseOutput != true || session?.qrImage == nil)
             Button("导出 Clash 配置…") { session?.exportYAML() }
+                .disabled(session?.canUseOutput != true)
+            Button("导出 Shadowrocket JSON…") { session?.exportJSON() }
                 .disabled(session?.canUseOutput != true)
         }
     }

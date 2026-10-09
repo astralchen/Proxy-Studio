@@ -13,6 +13,9 @@ struct ContentView: View {
     @State private var input = ""
     /// 最近一次成功解析的节点；尚未解析或解析失败时为 `nil`。
     @State private var node: ProxyNode?
+    /// 当前解析节点的稳定 JSON 身份与时间，布局切换时保留。
+    @State private var nodeIdentifier = UUID()
+    @State private var nodeCreatedAt = Date()
     /// 当前显示的解析错误；无错误时为 `nil`。
     @State private var parseError: String?
     /// 链接输入框是否持有键盘焦点。
@@ -60,6 +63,7 @@ struct ContentView: View {
                 .padding(20)
                 .frame(maxWidth: .infinity)
             }
+            .accessibilityIdentifier("importScroll")
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Proxy Studio")
             .toolbar {
@@ -79,7 +83,7 @@ struct ContentView: View {
             .onChange(of: input) { _, _ in node = nil; parseError = nil }
         } detail: {
             if let node {
-                NodeDetailView(node: node)
+                NodeDetailView(node: node, identifier: nodeIdentifier, createdAt: nodeCreatedAt)
                     // 节点变化时重建详情状态，重置密码可见性、UDP 开关和导出状态。
                     .id(node.shareLink)
             } else {
@@ -97,9 +101,9 @@ struct ContentView: View {
                 .frame(width: 68, height: 68)
                 .background(.teal.opacity(0.10), in: RoundedRectangle(cornerRadius: 20))
                 .accessibilityHidden(true)
-            Text("一条链接，两种配置。")
+            Text("一条链接，多种导出。")
                 .font(.title2.bold())
-            Text("将 SOCKS 节点转换为 Shadowrocket 二维码或 Clash 配置文件。")
+            Text("将 SOCKS 节点转换为 Shadowrocket 二维码、JSON 或 Clash 配置文件。")
                 .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 8)
@@ -160,7 +164,12 @@ struct ContentView: View {
     private func parse() {
         isEditing = false
         do {
-            node = try ProxyNode.parse(input)
+            let parsed = try ProxyNode.parse(input)
+            if parsed != node {
+                nodeIdentifier = UUID()
+                nodeCreatedAt = Date()
+            }
+            node = parsed
             parseError = nil
         } catch {
             node = nil

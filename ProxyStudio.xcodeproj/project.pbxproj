@@ -42,6 +42,7 @@
 				Platforms/macOS/Views/ContentView.swift,
 				Platforms/macOS/Views/ImportView.swift,
 				Platforms/macOS/Views/NodeDetailView.swift,
+				Platforms/macOS/Views/OutputEscapeHandler.swift,
 				Platforms/macOS/Views/ProxyCommands.swift,
 			);
 			target = 000000000000000000000006 /* ProxyStudio */;

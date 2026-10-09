@@ -24,10 +24,10 @@
 
 iOS 与 Mac 使用独立 app target 和共享源码：`ProxyStudio` / `ProxyStudioMac`，分别提供同名共享 Scheme。Mac 最低支持 **macOS 26.0**，使用原生 AppKit / SwiftUI，未使用 Mac Catalyst。
 
-Mac 工作区左侧导入，右侧显示节点摘要及“二维码 / Clash YAML”标签页。摘要字段共用标签列和值列，服务器、端口、账号和密码按列对齐，长值按可用宽度换行。YAML 随 UDP 开关即时更新，可选择复制并按窗口宽度换行；保存内容始终使用原始文本。默认窗口内容为 1100×760 pt，最小内容为 760×560 pt；窗口和分栏调整保留会话，每个新窗口拥有独立输入、节点和输出选项。
+Mac 工作区左侧导入，右侧显示节点摘要及“二维码 / Clash YAML / Shadowrocket JSON”标签页。摘要字段共用标签列和值列，服务器、端口、账号和密码按列对齐，长值按可用宽度换行。窄分栏中第三个标签简写为“JSON”，辅助功能名称保持“Shadowrocket JSON”。二维码、JSON 与 YAML 共用 UDP 开关并即时更新，可选择复制并按窗口宽度换行；保存内容始终使用原始文本。默认窗口内容为 1100×760 pt，最小内容为 760×560 pt；窗口和分栏调整保留会话，每个新窗口拥有独立输入、节点和输出选项。
 
-- `⌘↩` 解析，`⇧⌘⌫` 清空，`⌘1` / `⌘2` 切换输出，`⌘N` 新窗口；YAML 标签页中 Escape 返回二维码。
-- 使用原生系统保存面板和图片 / 链接分享入口。默认文件名为 `shadowrocket.png`、`clash.yaml`；取消不显示成功提示，也不清除会话。
+- `⌘↩` 解析，`⇧⌘⌫` 清空，`⌘1` / `⌘2` / `⌘3` 切换输出，`⌘N` 新窗口；文本标签页中 Escape 返回二维码。
+- 使用原生系统保存面板和图片 / 链接分享入口。默认文件名为 `shadowrocket.png`、`clash.yaml`、`shadowrocket.json`；取消不显示成功提示，也不清除会话。
 - `Core` 与共享 `Services` 共用于两平台；平台入口、视图和图片分享按 target membership 隔离，无需平台条件编译。
 - Mac 启用 App Sandbox，仅申请用户选择文件的读写权限；会话和凭据不写入持久化存储。
 
@@ -50,15 +50,31 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
 
 ## 使用
 
-粘贴 SOCKS 链接 → 解析链接 → 查看节点详情 → 保存或分享 Shadowrocket 二维码，或预览、导出 Clash YAML。
+粘贴 SOCKS 链接 → 解析链接 → 查看节点详情 → 保存或分享 Shadowrocket 二维码，或预览、导出 Shadowrocket JSON 和 Clash YAML。
 
 - 支持 `socks://`、`socks5://`、`socks\://…\@…` 转义格式。
-- 支持 Base64 / Base64URL 编码的 `username:password`，以及 URL 百分号编码的明文账号密码。
+- 支持 Base64 / Base64URL 编码的 `username:password`、Shadowrocket 整体 Base64 连接信息，以及 URL 百分号编码的明文账号密码。
 - 支持 IPv4、域名和方括号 IPv6，无认证节点也可导入。
-- 检查端口、认证长度和非法字符；拒绝未支持的查询参数，避免静默丢失连接选项。
-- 二维码包含四模块白色留边；PNG 和 YAML 都可存入“文件”。
-- Clash 默认所有进入客户端的流量走节点；策略组提供 `DIRECT`，UDP 默认关闭。
+- 检查端口、认证长度和非法字符；接受 `remarks` 与 `udp=0/1`，拒绝重复、冲突和未支持的查询参数，避免静默丢失连接选项。
+- 二维码包含至少四模块白色静区；PNG、JSON 和 YAML 都可存入“文件”。
+- Clash 默认所有进入客户端的流量走节点；策略组提供 `DIRECT`，未指定 UDP 时默认关闭。
 - 示例节点使用虚构域名和账号，不能用于实际连接。真实账号不会被嵌入工程或测试中。
+
+### Shadowrocket 二维码
+
+分享链接采用已确认的 Shadowrocket 导出格式：`socks://Base64(账号:密码@服务器:端口)?remarks=百分号编码的名称&udp=0/1`。免认证时仅编码 `服务器:端口`；IPv6 使用方括号。凭据保留原始 UTF-8 字符，完整连接信息一起进行标准 Base64 编码，名称放在 `remarks` 查询参数中。旧的 Base64 认证字段与 `#名称` 格式仍可导入。
+
+二维码使用 H 级纠错和整数比例放大，PNG 保留白色静区；更改 UDP 后，图片和分享链接同步更新，已打开的保存面板使用字节快照。二维码载荷与用户提供样本的逐字节比较、实际 PNG 回读和客户端验证分别记录在 [VALIDATION.md](VALIDATION.md)。本机 Shadowrocket 的图片选择器禁用了 PNG 的“打开”，实际识别仍待验证。
+
+[下载已回读的二维码格式示例（虚构节点，UDP 开启）](Preview/shadowrocket-example-qr.png)。
+
+### Shadowrocket JSON
+
+iOS 的 Shadowrocket 区域提供“预览 JSON”和“导出 JSON”；Mac 使用第三个输出标签页，也可通过工具栏和“节点”菜单导出。默认文件名为 `shadowrocket.json`。二维码、JSON 与 Clash YAML 共用 UDP 开关；未携带 UDP 参数的节点默认关闭，导入带 `udp=1` 的链接时启用。iOS 的“导出选项”和 Mac 所有输出标签页控制同一选项，切换节点时重新使用新链接的初始状态。
+
+JSON 按已确认的 Shadowrocket 单节点导出样本生成，顶层是一个包含 41 个字段的对象。协议为 `Socks5`，端口为字符串，UDP 为整数 `0/1`，名称、账号、密码使用 `title`、`user`、`password`。免认证时账号和密码为空字符串；IPv6 不带外层方括号。每个新解析节点拥有稳定 UUID 与创建时间，预览、切换输出和重复导出不会刷新这些元数据。
+
+JSON 预览可选择文本并按可用宽度换行，保存时使用原始 UTF-8 字节。文件包含明文凭据，请妥善保存。本机 Shadowrocket 2.2.92 的“数据 → 导入节点”文件选择器对该 JSON 禁用了“打开”，本次未完成节点导入；具体记录见 [VALIDATION.md](VALIDATION.md)。格式仍遵循已确认的单节点样本，使用前请确认目标导入入口支持该格式。当前仅生成单节点 JSON，不提供 JSON 导入或批量节点。
 
 本应用负责生成配置，不提供 VPN 隧道、不测试节点连通性，也不在后台连接代理。输入只保存在当前内存状态中，退出应用后不保证保留；导出的文件包含认证信息。
 
@@ -82,12 +98,12 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
 
 `ProxyStudio/` 在 Xcode 中使用同步文件夹（`PBXFileSystemSynchronizedRootGroup`），目录结构直接跟随磁盘。两个 app target 共用 `Core`、`Services` 和 `Platforms/Resources`，并通过 membership exceptions 排除另一平台的源码。新增平台专属文件时，需在 File Inspector 中确认 Target Membership 仅勾选所属平台。
 
-- `ProxyStudio/Core`：链接解析、规范化、Clash YAML 生成。
+- `ProxyStudio/Core`：链接解析、规范化、Clash YAML 与 Shadowrocket JSON 生成。
 - `ProxyStudio/Services`：平台无关的 Core Image 二维码、PNG 编码与文件文档。
-- `ProxyStudio/Platforms/iOS`：iOS 应用入口、导入、节点详情、YAML 快照预览和 UIKit 分享。
+- `ProxyStudio/Platforms/iOS`：iOS 应用入口、导入、节点详情、YAML / JSON 快照预览和 UIKit 分享。
 - `ProxyStudio/Platforms/macOS`：Mac 应用入口、桌面视图、`Stores/ProxySession` 和 AppKit 图片分享。
 - `ProxyStudio/Platforms/Resources`：两平台共享的颜色、图标资源。
-- `ProxyStudioTests`：两平台共用的解析边界、IPv6、转义、YAML 和实际 PNG 回验。
+- `ProxyStudioTests`：两平台共用的解析边界、IPv6、转义、YAML、JSON 契约与确定性和实际 PNG 回验。
 - `ProxyStudioMacTests` / `ProxyStudioMacUITests`：Mac 会话和原生桌面流程；不使用移动端旋转或文档选择器标识。
 - `ProxyStudioUITests`：示例导入、详情、旋转、大字体与导出界面。
 
