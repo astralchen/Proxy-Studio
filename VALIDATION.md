@@ -309,3 +309,35 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudio \
 | PNG 重新保存、Mac / iPad / RTL / 大字体 | 未执行 | 本次为 iOS 展示尺寸修复，未以旧结果代替本轮执行 |
 
 本轮日志与附件保留在 `.build/validation/qr-scroll-20261009/`，Duo 新截图为 `Preview/glass-duo-qr-before-scroll.png`（初始位置）与 `Preview/glass-duo-qr.png`（滚动后完整二维码）；`Preview/glass-iphone-qr.png` 亦替换为本轮 iPhone 滚动后截图。`git diff --check` 通过。
+
+## 2026-10-09 — Shadowrocket URL 导出
+
+两端新增第四种输出“Shadowrocket URL”，提供即时链接预览、复制原文和 `.url` 导出；Mac 支持 `⌘4`、显示 / 导出菜单以及文本输出的 Escape 返回二维码。格式选择沿用完整标签、简写与菜单的宽度自适应行为。URL、二维码、JSON、YAML 共用 UDP，切换格式不刷新节点身份与创建时间。URL 文件使用当前分享链接的 UTF-8 字节，不添加 BOM、末尾换行或其他包装；默认名为 `shadowrocket.url`，系统面板打开前捕获不可变字节快照。
+
+本轮证据位于 `.build/validation/url-export-20261009/`。附件只在本地内存中进行格式核对；报告不保存原始节点或凭据，测试与截图仅使用虚构示例。
+
+| 检查 | 状态 | 本次证据与边界 |
+| --- | --- | --- |
+| 用户 `.url` 样本字节核对 | 通过 | 当前 `ProxyNode.parse` 解析后再由 `shadowrocketLink(udpEnabled:)` 生成，与附件 116 字节完全一致；无 BOM、无换行。脱敏报告 `sample-byte-check.json` |
+| iOS 应用与测试目标编译 | 通过 | `ios-build.log` 与模拟器重启后的 `ios-restart-build.log` 均为 `TEST BUILD SUCCEEDED`，退出 0；最低部署版本保持 iOS 26.0 |
+| Mac 应用与测试目标编译及实际启动 | 通过 | `mac-build.log` 为 `TEST BUILD SUCCEEDED`；最终 `script/build_and_run.sh --verify` 的 `mac-run.log` 为 `BUILD SUCCEEDED`，脚本退出 0 并确认进程启动；最低部署版本保持 macOS 26.0 |
+| Mac 核心、会话及选定 UI 回归 | 通过 | `Mac-URL.xcresult`、`mac-test.log`、`mac-summary.json`：38 单元 + 7 UI，共 45 项、0 失败；含 URL 往返、快照、无节点禁用、窗口隔离、原文复制、UDP 同步、菜单 / ⌘4、Escape、四格式取消、最小窗口和现有 PNG / YAML / JSON 保存回归 |
+| Mac URL 实际保存与扩展名 | 通过 | `testURLActualSaveAndReadOnlyFailure` 通过原生系统面板写入 `shadowrocket.url`，119 字节与保存前预览原始字节一致；目录断言确认未生成 `.txt`。`Mac-URL-预览原始字节` 附件位于 `mac-attachments/` |
+| Mac URL 实际写入失败 | 通过 | 同一 UI 用例在只读目录收到“保存失败：”，确认没有产生文件，预览和节点仍保留；权限仅设置在本轮创建的临时测试目录，并在结束时恢复 |
+| Mac 最终窗口及四输出布局复测 | 通过 | 补齐输入法浮层清理后，`Mac-URL-Window-Verified.xcresult`、`mac-window-verified.log`、`mac-window-verified-summary.json`：1 项 UI、0 失败；实际缩小 / 扩大窗口，确认最小窗口的 URL 预览、导出和选择器水平范围在窗口内，操作可达，UDP 与密码状态保留，侧栏隐藏 / 恢复不清空输入；最终截图已检查 |
+| iOS 核心与会话测试 | 通过 | 重启后的 iPhone Duo / iOS 27.1，`duo-restart-test.log`：27 项、0 失败；含 IPv6、免认证、中文 / 特殊凭据、UDP、URL 字节与独立 QR 回读一致性、不可变快照及结果处理 |
+| iOS URL 实际保存与文件回读 | 通过 | Duo 两次原生保存均完成；File Provider Storage 中两个实际 `.url` 文件均为 119 字节，与各轮保存前预览附件逐字节一致，没有 BOM 或换行；`ios-url-file-readback.json`、`ios-url-file-readback-final.json`。文件名在系统面板中主动修改，扩展名仍为 `.url` |
+| Duo URL 复制、返回保留、取消与最大字号 | 通过 | `Duo-URL-Restart.xcresult` 中 URL 的 4 项 UI 均通过；原始复制后主动粘贴核对、节点元数据稳定、UDP 同步、取消保留及最大辅助功能字号操作可达。该批次整体为 33 passed / 1 failed，不能记为完整套件通过 |
+| Duo 最终 PNG / URL 保存与 URL 取消复测 | 通过 | 改进 UDP 测试点击方式后，`Duo-URL-Final.xcresult`、`duo-final-test.log`、`duo-final-summary.json`：3 项 UI、0 失败；实际 URL 再次回读与本次快照一致。初轮 PNG 点击后仍为关闭的失败记录保留 |
+| iPad 分栏与最大辅助功能字号 | 通过 | iPad Pro 13-inch (M5) / iOS 26.5，`iPad-URL.xcresult`、`ipad-test.log`、`ipad-summary.json`：2 项 UI、0 失败；四输出切换、URL / JSON / YAML 共享 UDP、保存取消、字号下菜单与导出 / 复制可达；截图已检查 |
+| 第三方 Shadowrocket `.url` 实际导入 | 未执行 | 本轮未操作目标客户端节点或连接；样本字节一致不等同于客户端实际导入通过 |
+
+首次 Duo 测试在开始 XCTest 前长时间等待，保留 `Duo-URL-Units.xcresult` 和 `duo-units.log` 的 `TEST INTERRUPTED` 记录；iPhone 17 Pro 的后续尝试也在构建 / 测试启动阶段停止，记录为未执行。按用户要求关闭本任务的模拟器并重启 Duo 后，重新构建再运行测试；没有清除模拟器数据，也没有修改系统隐私权限。上述中断不计入通过测试数。
+
+Duo 重启后的批次完成 27 单元及 7 UI，其中 6 UI 通过、PNG 1 项失败：测试按标签行的固定比例点击 UDP 后，开关仍显示 `0`。现改为先点击开关本身，仅在当前值仍关闭时尝试控件一侧，仍断言确实启用；最终 PNG 实际保存和两项 URL 复测全部通过。初轮失败结果包及日志保留。Xcode 在失败后启动 `simctl diagnose --timeout=600`，结果收尾长时间等待；停止该次诊断后成功导出原始结果、截图和预览字节。后续复测关闭自动诊断采集，仍保留全部断言、截图和 xcresult。
+
+最终 Mac 的 UDP 说明文字补充 URL 后，单元测试再次 38 项通过；窗口复测先遇到脚本与测试应用两个同名进程并存，关闭额外实例后仍被系统 `InputSource` 浮层的辅助功能快照中断。`Mac-URL-Final.xcresult` / `mac-final-test.log` 保留中断记录，`Mac-URL-Window-Single.xcresult` / `mac-window-single.log` 保留 120 秒执行超时的失败。测试准备步骤增加第二次 Escape：首次可能由文本输出切回二维码，第二次再交给输入法关闭浮层，随后恢复输出。最终 `Mac-URL-Window-Verified.xcresult` 中窗口用例通过，1 项、0 失败，不覆盖上述历史记录。
+
+本轮截图为 `Preview/shadowrocket-url-duo.png`、`Preview/shadowrocket-url-ipad.png` 和 `Preview/shadowrocket-url-mac.png`，来自实际 XCTest 附件；使用虚构示例节点，URL 视觉换行不改变复制或保存字节。
+
+本轮最终 `git diff --check` 通过；源文件哈希快照为 `source-snapshot.json`。未将真实附件、诊断或构建产物纳入仓库。

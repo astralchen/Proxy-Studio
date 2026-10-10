@@ -3,17 +3,22 @@ import UniformTypeIdentifiers
 
 /// 供系统文件导出器读取和写入的内存文档。
 ///
-/// 文档按原样保存字节，不解析 YAML 或 JSON，也不对图片进行重新编码。
+/// 文档按原样保存字节，不解析链接、YAML 或 JSON，也不对图片进行重新编码。
 /// 调用方应确保传给文件导出器的内容类型与 `data` 的实际格式一致。
 struct ExportDocument: FileDocument {
+    /// Shadowrocket 链接文件的内容类型；无法识别扩展名时使用不附加文本扩展名的数据类型。
+    static var shadowrocketURLType: UTType { UTType(filenameExtension: "url") ?? .data }
+
     /// 可读取的内容类型。系统未注册 YAML 类型时，使用纯文本类型作为后备。
-    static var readableContentTypes: [UTType] { [.data, .plainText, .png, .json, UTType(filenameExtension: "yaml") ?? .plainText] }
+    static var readableContentTypes: [UTType] {
+        [.data, .plainText, .png, .json, UTType(filenameExtension: "yaml") ?? .plainText, shadowrocketURLType]
+    }
     /// 文档的完整内容。
     var data: Data
 
     /// 使用已编码的文件内容创建文档。
     ///
-    /// - Parameter data: 要保存的原始字节，例如 UTF-8 YAML、JSON 或 PNG 数据。
+    /// - Parameter data: 要保存的原始字节，例如 UTF-8 链接、YAML、JSON 或 PNG 数据。
     init(data: Data) { self.data = data }
 
     /// 从系统提供的普通文件包装器读取文档。

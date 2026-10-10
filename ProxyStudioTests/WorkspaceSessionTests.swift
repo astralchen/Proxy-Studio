@@ -75,11 +75,11 @@ final class WorkspaceSessionTests: XCTestCase {
     }
 
     @MainActor
-    func testCurrentExportCapturesJSONAndYAMLSnapshotsBeforeChanges() throws {
+    func testCurrentExportCapturesTextSnapshotsBeforeChanges() throws {
         let session = ProxySession()
         session.input = ProxyNode.exampleLink
         session.parse()
-        for format in [OutputFormat.json, .yaml] {
+        for format in [OutputFormat.json, .yaml, .url] {
             session.output = format
             let expected = Data(try XCTUnwrap(session.outputText).utf8)
             session.exportCurrent()
@@ -94,6 +94,105 @@ final class WorkspaceSessionTests: XCTestCase {
             XCTAssertEqual(session.output, format)
             XCTAssertNotNil(session.node)
         }
+    }
+
+    /// URL 文件保留可往返的单条链接，不添加 BOM、换行或文本包装。
+    @MainActor
+    func testURLExportRoundTripsCredentialsAddressesAndUDP() throws {
+        let inputs = [
+            ProxyNode.exampleLink,
+            "socks5://[2001:db8::1]:1080?remarks=%E4%B8%AD%E6%96%87%20IPv6",
+            "socks5://%E8%B4%A6%E5%8F%B7:p%40ss%3A%2F%3F%23%25@proxy.example.com:1080?remarks=%E4%B8%AD%E6%96%87%20%26%20URL"
+        ]
+        for input in inputs {
+            let session = ProxySession()
+            session.input = input
+            session.parse()
+            let node = try XCTUnwrap(session.node)
+            let identifier = session.nodeIdentifier
+            let createdAt = session.nodeCreatedAt
+            session.output = .url
+            for udp in [false, true] {
+                session.udpEnabled = udp
+                let text = try XCTUnwrap(session.outputText)
+                XCTAssertEqual(text, session.shareLink)
+                XCTAssertTrue(text.hasSuffix("&udp=\(udp ? 1 : 0)"))
+                session.exportCurrent()
+                let bytes = try XCTUnwrap(session.exportDocument?.data)
+                XCTAssertEqual(bytes, Data(text.utf8))
+                XCTAssertFalse(bytes.starts(with: [0xEF, 0xBB, 0xBF]))
+                XCTAssertFalse(bytes.contains(10))
+                XCTAssertFalse(bytes.contains(13))
+                XCTAssertEqual(session.exportName, "shadowrocket.url")
+                XCTAssertEqual(session.exportType, ExportDocument.shadowrocketURLType)
+                XCTAssertEqual(session.exportType.preferredFilenameExtension, "url")
+                XCTAssertTrue(ExportDocument.readableContentTypes.contains(session.exportType))
+                let parsed = try ProxyNode.parse(String(decoding: bytes, as: UTF8.self))
+                XCTAssertEqual(parsed.name, node.name)
+                XCTAssertEqual(parsed.host, node.host)
+                XCTAssertEqual(parsed.port, node.port)
+                XCTAssertEqual(parsed.username, node.username)
+                XCTAssertEqual(parsed.password, node.password)
+                XCTAssertEqual(parsed.udpEnabled, udp)
+                session.cancelExport()
+                session.exportURL()
+                XCTAssertEqual(session.exportDocument?.data, bytes)
+                session.cancelExport()
+                session.output = .json
+                session.output = .url
+                XCTAssertEqual(session.nodeIdentifier, identifier)
+                XCTAssertEqual(session.nodeCreatedAt, createdAt)
+            }
+        }
+    }
+
+    @MainActor
+    func testURLExportAvailabilityResultsAndIndependentWindows() throws {
+        let first = ProxySession()
+        first.output = .url
+        XCTAssertNil(first.outputText)
+        XCTAssertFalse(first.canExportCurrent)
+        first.exportURL()
+        XCTAssertFalse(first.isExporting)
+        let second = ProxySession()
+        for session in [first, second] {
+            session.input = ProxyNode.exampleLink
+            session.parse()
+        }
+        first.output = .url
+        first.udpEnabled = true
+        first.revealPassword = true
+        first.detailsExpanded = true
+        let text = first.outputText
+        let results: [Result<URL, Error>] = [
+            .success(URL(fileURLWithPath: "/tmp/shadowrocket.url")),
+            .failure(CocoaError(.fileWriteNoPermission)),
+            .failure(CocoaError(.userCancelled))
+        ]
+        for result in results {
+            first.exportCurrent()
+            first.finishExport(result)
+            XCTAssertFalse(first.isExporting)
+            XCTAssertNil(first.exportDocument)
+            XCTAssertEqual(first.outputText, text)
+            XCTAssertEqual(first.output, .url)
+            XCTAssertTrue(first.revealPassword)
+            XCTAssertTrue(first.detailsExpanded)
+            XCTAssertTrue(first.udpEnabled)
+            switch result {
+            case .success: XCTAssertEqual(first.message, "文件已保存。")
+            case .failure(let error):
+                if (error as NSError).code == NSUserCancelledError { XCTAssertNil(first.message) }
+                else { XCTAssertTrue(first.message?.hasPrefix("保存失败：") == true) }
+            }
+        }
+        XCTAssertEqual(second.output, .qr)
+        XCTAssertFalse(second.udpEnabled)
+        XCTAssertNil(second.exportDocument)
+        first.input = "invalid"
+        XCTAssertNil(first.outputText)
+        XCTAssertFalse(first.canExportCurrent)
+        XCTAssertNotNil(second.node)
     }
 
     /// 独立二维码解码器验证 PNG 快照保留保存前的 UDP 载荷。
@@ -117,7 +216,15 @@ final class WorkspaceSessionTests: XCTestCase {
         try VNImageRequestHandler(cgImage: image).perform([request])
         XCTAssertEqual(request.results?.first?.payloadStringValue, payload)
         XCTAssertEqual(session.exportDocument?.data, snapshot)
+        // URL 导出的原始文本与独立解码器读取的二维码载荷相同。
         session.cancelExport()
+        session.udpEnabled = false
+        session.output = .url
+        session.exportCurrent()
+        XCTAssertEqual(session.exportDocument?.data, Data(try XCTUnwrap(request.results?.first?.payloadStringValue).utf8))
+        session.cancelExport()
+        session.udpEnabled = true
+        session.output = .qr
         XCTAssertTrue(session.udpEnabled)
         XCTAssertNil(session.message)
     }

@@ -124,7 +124,7 @@ struct NodeSummary: View {
             Divider()
             Toggle("启用 UDP", isOn: $udpEnabled)
                 .toggleStyle(.switch).accessibilityIdentifier("udpToggle")
-            Text("同时用于二维码、JSON 和 YAML；请确认服务端支持。")
+            Text("同时用于二维码、URL、JSON 和 YAML；请确认服务端支持。")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -206,6 +206,7 @@ struct OutputPreview: View {
     let image: QRCodeImage?
     let yaml: String
     let json: String?
+    let url: String
     /// 显示宽度上限；窄容器按内容宽度缩小，滚动位置不影响尺寸，原始 PNG 像素不变。
     var qrMaximumDimension: CGFloat = 320
 
@@ -222,7 +223,7 @@ struct OutputPreview: View {
                         .frame(maxWidth: .infinity)
                 } else {
                     ContentUnavailableView("二维码生成失败", systemImage: "qrcode",
-                                           description: Text("仍可分享导入链接或导出 JSON、YAML。"))
+                                           description: Text("仍可分享导入链接或导出 URL、JSON、YAML。"))
                 }
                 Text("在 Shadowrocket 中扫描二维码，或识别保存的图片。")
                     .font(.subheadline).foregroundStyle(.secondary)
@@ -235,6 +236,10 @@ struct OutputPreview: View {
                     .font(.caption).foregroundStyle(.secondary)
                 if let json { textPreview(json, identifier: "jsonPreview") }
                 else { ContentUnavailableView("无法生成 JSON 文件。", systemImage: "doc.badge.ellipsis") }
+            case .url:
+                Text("将当前导入链接保存为 .url 文件，内容与二维码一致。")
+                    .font(.caption).foregroundStyle(.secondary)
+                textPreview(url, identifier: "urlPreview")
             }
             Label("二维码和配置包含账号信息，请妥善保存。", systemImage: "lock.shield")
                 .font(.caption).foregroundStyle(.secondary)

@@ -18,7 +18,7 @@ struct NodeDetailView: View {
                     OutputPicker(selection: $session.output).disabled(session.isExporting)
                     // 只按内容宽度约束图片；导航栏随滚动改变高度时，二维码尺寸保持稳定。
                     OutputPreview(output: session.output, nodeName: node.name,
-                                  image: session.qrImage, yaml: session.yaml, json: session.json)
+                                  image: session.qrImage, yaml: session.yaml, json: session.json, url: session.shareLink)
                 }
                 .frame(maxWidth: 1000).padding(20).frame(maxWidth: .infinity)
             }

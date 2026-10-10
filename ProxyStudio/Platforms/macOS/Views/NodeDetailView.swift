@@ -13,7 +13,7 @@ struct NodeDetailView: View {
                                 revealPassword: $session.revealPassword, udpEnabled: $session.udpEnabled)
                     OutputPicker(selection: $session.output)
                     OutputPreview(output: session.output, nodeName: node.name,
-                                  image: session.qrImage, yaml: session.yaml, json: session.json)
+                                  image: session.qrImage, yaml: session.yaml, json: session.json, url: session.shareLink)
                 }
                 .disabled(session.isExporting)
                 .frame(width: max(0, min(1000, geometry.size.width - 56)), alignment: .leading)

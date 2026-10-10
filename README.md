@@ -32,10 +32,10 @@
 
 iOS 与 Mac 使用独立 app target 和共享源码：`ProxyStudio` / `ProxyStudioMac`，分别提供同名共享 Scheme。Mac 最低支持 **macOS 26.0**，使用原生 AppKit / SwiftUI，未使用 Mac Catalyst。
 
-Mac 工作区左侧导入，右侧显示节点摘要及“二维码 / Clash YAML / Shadowrocket JSON”输出。节点名称、地址和 UDP 常驻，点击“节点详情”展开协议、账号及默认隐藏的密码。完整字段共用标签列和值列，长值按可用宽度换行。格式切换按控件所需宽度使用完整标签、YAML / JSON 简写或菜单，辅助功能名称保持完整。二维码、JSON 与 YAML 共用 UDP 开关并即时更新，可选择复制并按窗口宽度换行；保存内容始终使用原始文本。默认窗口内容为 1100×760 pt，最小内容为 760×560 pt；窗口和分栏调整保留会话，每个新窗口拥有独立输入、节点和输出选项。
+Mac 工作区左侧导入，右侧显示节点摘要及“二维码 / Clash YAML / Shadowrocket JSON / Shadowrocket URL”输出。节点名称、地址和 UDP 常驻，点击“节点详情”展开协议、账号及默认隐藏的密码。完整字段共用标签列和值列，长值按可用宽度换行。格式切换按控件所需宽度使用完整标签、YAML / JSON / URL 简写或菜单，辅助功能名称保持完整。二维码、URL、JSON 与 YAML 共用 UDP 开关并即时更新，可选择复制并按窗口宽度换行；保存内容始终使用原始文本。默认窗口内容为 1100×760 pt，最小内容为 760×560 pt；窗口和分栏调整保留会话，每个新窗口拥有独立输入、节点和输出选项。
 
-- `⌘↩` 解析，`⇧⌘⌫` 清空，`⌘1` / `⌘2` / `⌘3` 切换输出，`⌘N` 新窗口；文本标签页中 Escape 返回二维码。
-- 使用原生系统保存面板和图片 / 链接分享入口。默认文件名为 `shadowrocket.png`、`clash.yaml`、`shadowrocket.json`；取消不显示成功提示，也不清除会话。
+- `⌘↩` 解析，`⇧⌘⌫` 清空，`⌘1` / `⌘2` / `⌘3` / `⌘4` 切换输出，`⌘N` 新窗口；文本标签页中 Escape 返回二维码。
+- 使用原生系统保存面板和图片 / 链接分享入口。默认文件名为 `shadowrocket.png`、`clash.yaml`、`shadowrocket.json`、`shadowrocket.url`；取消不显示成功提示，也不清除会话。
 - `Core` 与共享 `Services` 共用于两平台；平台入口、视图和图片分享按 target membership 隔离，无需平台条件编译。
 - Mac 启用 App Sandbox，仅申请用户选择文件的读写权限；会话和凭据不写入持久化存储。
 
@@ -60,17 +60,17 @@ xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
 
 界面采用冰青通透配色：浅色冷白、深色石墨，青绿用于主要操作。解析、保存和次要操作使用系统 Liquid Glass；原生侧栏、工具栏与系统面板保持系统材质。输入、节点字段和配置正文使用稳定底色，二维码始终保留黑白像素及白色静区。
 
-iOS 底部安全区域提供当前格式的保存及分享 / 复制操作，大字体下纵向排列；Mac 将操作集中到原生工具栏，完整导出菜单保留在“节点”菜单中。JSON / YAML 在工作区随 UDP 即时更新，不再通过 iOS 预览 sheet 捕获旧快照。系统保存面板打开前仍捕获不可变文件字节，取消不清空会话、不提示成功。
+iOS 底部安全区域提供当前格式的保存及分享 / 复制操作，大字体下纵向排列；Mac 将操作集中到原生工具栏，完整导出菜单保留在“节点”菜单中。JSON / YAML / URL 在工作区随 UDP 即时更新，不再通过 iOS 预览 sheet 捕获旧快照。系统保存面板打开前仍捕获不可变文件字节，取消不清空会话、不提示成功。
 
 ## 使用
 
-粘贴 SOCKS 链接 → 解析链接 → 输出工作区 → 保存或分享二维码，或切换到 JSON / YAML 预览、复制与导出。手机解析成功后自动进入工作区；返回导入页保留 UDP、密码可见性、输出选择与节点元数据，实际修改输入才使旧结果失效。
+粘贴 SOCKS 链接 → 解析链接 → 输出工作区 → 保存或分享二维码，或切换到 JSON / YAML / URL 预览、复制与导出。手机解析成功后自动进入工作区；返回导入页保留 UDP、密码可见性、输出选择与节点元数据，实际修改输入才使旧结果失效。
 
 - 支持 `socks://`、`socks5://`、`socks\://…\@…` 转义格式。
 - 支持 Base64 / Base64URL 编码的 `username:password`、Shadowrocket 整体 Base64 连接信息，以及 URL 百分号编码的明文账号密码。
 - 支持 IPv4、域名和方括号 IPv6，无认证节点也可导入。
 - 检查端口、认证长度和非法字符；接受 `remarks` 与 `udp=0/1`，拒绝重复、冲突和未支持的查询参数，避免静默丢失连接选项。
-- 二维码包含至少四模块白色静区；PNG、JSON 和 YAML 都可存入“文件”。
+- 二维码包含至少四模块白色静区；PNG、URL、JSON 和 YAML 都可存入“文件”。
 - Clash 默认所有进入客户端的流量走节点；策略组提供 `DIRECT`，未指定 UDP 时默认关闭。
 - 示例节点使用虚构域名和账号，不能用于实际连接。真实账号不会被嵌入工程或测试中。
 
@@ -84,11 +84,25 @@ iOS 底部安全区域提供当前格式的保存及分享 / 复制操作，大�
 
 ### Shadowrocket JSON
 
-iOS 输出工作区切换到“Shadowrocket JSON”后即时预览，并提供“导出 JSON”和“复制文本”；Mac 使用第三种输出，也可通过工具栏和“节点”菜单导出。默认文件名为 `shadowrocket.json`。二维码、JSON 与 Clash YAML 共用 UDP 开关；未携带 UDP 参数的节点默认关闭，导入带 `udp=1` 的链接时启用。两端摘要中的 UDP 开关控制同一选项，切换节点时重新使用新链接的初始状态。
+iOS 输出工作区切换到“Shadowrocket JSON”后即时预览，并提供“导出 JSON”和“复制文本”；Mac 使用第三种输出，也可通过工具栏和“节点”菜单导出。默认文件名为 `shadowrocket.json`。二维码、URL、JSON 与 Clash YAML 共用 UDP 开关；未携带 UDP 参数的节点默认关闭，导入带 `udp=1` 的链接时启用。两端摘要中的 UDP 开关控制同一选项，切换节点时重新使用新链接的初始状态。
 
 JSON 按已确认的 Shadowrocket 单节点导出样本生成，顶层是一个包含 41 个字段的对象。协议为 `Socks5`，端口为字符串，UDP 为整数 `0/1`，名称、账号、密码使用 `title`、`user`、`password`。免认证时账号和密码为空字符串；IPv6 不带外层方括号。每个新解析节点拥有稳定 UUID 与创建时间，预览、切换输出和重复导出不会刷新这些元数据。
 
 JSON 预览可选择文本并按可用宽度换行，保存时使用原始 UTF-8 字节。文件包含明文凭据，请妥善保存。本机 Shadowrocket 2.2.92 的“数据 → 导入节点”文件选择器对该 JSON 禁用了“打开”，本次未完成节点导入；具体记录见 [VALIDATION.md](VALIDATION.md)。格式仍遵循已确认的单节点样本，使用前请确认目标导入入口支持该格式。当前仅生成单节点 JSON，不提供 JSON 导入或批量节点。
+
+### Shadowrocket URL
+
+![Duo URL 工作区：第四种输出、UDP 同步与原生导出操作](Preview/shadowrocket-url-duo.png)
+
+![iPad URL 工作区：宽分栏、即时链接预览与复制导出](Preview/shadowrocket-url-ipad.png)
+
+![原生 Mac 最小窗口：URL 输出保留节点与 UDP 状态](Preview/shadowrocket-url-mac.png)
+
+两端工作区新增第四种输出“Shadowrocket URL”，显示与当前二维码载荷、分享链接完全一致的 `socks://` 文本，可选择、复制并通过“导出 URL”保存。Mac 支持 `⌘4`，也可从“节点”菜单显示或导出 URL。窄窗口使用“URL”简写，辅助功能名称保持完整。
+
+默认文件名为 `shadowrocket.url`，允许在系统保存面板中修改。文件直接保存单条链接的 UTF-8 字节，不添加 BOM、末尾换行或其他包装，与用户提供的 Shadowrocket `.url` 样本结构一致。UDP 与二维码、JSON、YAML 共用并即时更新；保存前捕获不可变快照，视觉换行不写入文件。取消保留当前节点、输出选择和详情状态。
+
+URL 中的 Base64 可还原凭据，请妥善保存。当前只导出单节点 `.url`，不提供文件导入或批量节点。两端实际保存、扩展名与字节回读的结果，以及第三方客户端导入的验证边界，见 [验证记录](VALIDATION.md#2026-10-09--shadowrocket-url-导出)。
 
 本应用负责生成配置，不提供 VPN 隧道、不测试节点连通性，也不在后台连接代理。输入只保存在当前内存状态中，退出应用后不保证保留；导出的文件包含认证信息。
 
@@ -118,7 +132,7 @@ JSON 预览可选择文本并按可用宽度换行，保存时使用原始 UTF-8
 - `ProxyStudio/Platforms/macOS`：Mac 应用入口、桌面视图、`Stores/ProxySession` 和 AppKit 图片分享。
 - `ProxyStudio/Platforms/Shared`：两端共用的导入说明、摘要、格式切换、输出预览与视觉语义。
 - `ProxyStudio/Platforms/Resources`：两平台共享的颜色、图标资源。
-- `ProxyStudioTests`：两平台共用的解析边界、IPv6、转义、YAML、JSON 契约与确定性和实际 PNG 回验。
+- `ProxyStudioTests`：两平台共用的解析边界、IPv6、转义、YAML、JSON、URL 契约与确定性和实际 PNG 回验。
 - `ProxyStudioMacTests` / `ProxyStudioMacUITests`：Mac 会话和原生桌面流程；不使用移动端旋转或文档选择器标识。
 - `ProxyStudioUITests`：示例导入、详情、旋转、大字体与导出界面。
 

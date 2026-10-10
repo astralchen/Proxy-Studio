@@ -74,6 +74,34 @@ final class ProxyStudioUITests: XCTestCase {
     }
 
     @MainActor
+    func testURLPreviewSharedUDPAndCancelExport() throws {
+        let app = launch()
+        openExampleDetails(app)
+        select(.url, app: app)
+        let preview = app.staticTexts["urlPreview"]
+        XCTAssertTrue(text(preview).hasSuffix("&udp=0"))
+        setUDP(app)
+        let snapshot = text(preview)
+        XCTAssertTrue(snapshot.hasSuffix("&udp=1"))
+        select(.json, app: app)
+        let original = try jsonObject(app.staticTexts["jsonPreview"])
+        XCTAssertEqual(original["udp"] as? Int, 1)
+        select(.yaml, app: app)
+        XCTAssertTrue(text(app.staticTexts["yamlPreview"]).contains("udp: true"))
+        select(.url, app: app)
+        XCTAssertEqual(text(preview), snapshot)
+        app.buttons["exportURL"].tap()
+        XCTAssertTrue(saveButton(app).waitForExistence(timeout: 15))
+        cancelSave(app)
+        XCTAssertTrue(app.buttons["exportURL"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.alerts["导出"].exists)
+        XCTAssertEqual(text(preview), snapshot)
+        attach(app, "URL-iOS-即时预览与取消")
+        select(.json, app: app)
+        XCTAssertEqual(try jsonObject(app.staticTexts["jsonPreview"])["uuid"] as? String, original["uuid"] as? String)
+    }
+
+    @MainActor
     func testBackNavigationPreservesOptionsAndCopyUsesOriginalText() throws {
         let app = launch()
         openExampleDetails(app)
@@ -112,6 +140,44 @@ final class ProxyStudioUITests: XCTestCase {
     }
 
     @MainActor
+    func testURLBackNavigationAndCopyUsesOriginalText() throws {
+        let app = launch()
+        openExampleDetails(app)
+        app.buttons["nodeDisclosure"].tap()
+        XCTAssertTrue(app.buttons["togglePassword"].waitForExistence(timeout: 5))
+        app.buttons["togglePassword"].tap()
+        setUDP(app)
+        select(.url, app: app)
+        let snapshot = text(app.staticTexts["urlPreview"])
+        // 紧凑布局具有系统返回按钮；宽分栏直接保留导入栏。
+        let back = app.buttons.matching(NSPredicate(
+            format: "identifier == %@ OR label == %@ OR label == %@ OR label == %@",
+            "BackButton", "Proxy Studio", "返回", "Back")).firstMatch
+        if back.exists {
+            back.tap()
+            let result = app.buttons["nodeResult"]
+            scrollTo(result, app: app, isImport: true)
+            result.tap()
+        }
+        XCTAssertTrue(app.buttons["exportURL"].waitForExistence(timeout: 5))
+        XCTAssertEqual(text(app.staticTexts["urlPreview"]), snapshot)
+        scrollTo(app.buttons["togglePassword"], app: app)
+        XCTAssertEqual(app.staticTexts["nodePassword"].value as? String, "example-password")
+        app.buttons["copyOutput"].tap()
+        // 反馈会自动消失；用后续主动粘贴核对真正复制的原始内容。
+        if back.exists { back.tap() }
+        let paste = app.buttons["粘贴代理链接"]
+        scrollTo(paste, app: app, isImport: true)
+        paste.tap()
+        let allow = app.buttons["允许粘贴"]
+        if allow.waitForExistence(timeout: 2) { allow.tap() }
+        let editor = app.descendants(matching: .any)["proxyLinkInput"].firstMatch
+        XCTAssertEqual(editor.value as? String, snapshot)
+        XCTAssertFalse(app.buttons["nodeResult"].exists)
+        attach(app, "URL-iOS-复制与输入失效")
+    }
+
+    @MainActor
     func testJSONPreviewAtAccessibilityTextSize() {
         let app = launch(large: true)
         openExampleDetails(app)
@@ -120,6 +186,17 @@ final class ProxyStudioUITests: XCTestCase {
         XCTAssertTrue(app.buttons["exportJSON"].isHittable)
         XCTAssertTrue(app.buttons["copyOutput"].isHittable)
         attach(app, "Glass-iOS-辅助功能JSON")
+    }
+
+    @MainActor
+    func testURLPreviewAtAccessibilityTextSize() {
+        let app = launch(large: true)
+        openExampleDetails(app)
+        select(.url, app: app)
+        XCTAssertTrue(app.staticTexts["urlPreview"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["exportURL"].isHittable)
+        XCTAssertTrue(app.buttons["copyOutput"].isHittable)
+        attach(app, "URL-iOS-辅助功能URL")
     }
 
     @MainActor
@@ -195,6 +272,20 @@ final class ProxyStudioUITests: XCTestCase {
     }
 
     @MainActor
+    func testURLSaveSuccess() throws {
+        let app = launch()
+        openExampleDetails(app)
+        select(.url, app: app)
+        let snapshot = Data(text(app.staticTexts["urlPreview"]).utf8)
+        let attachment = XCTAttachment(data: snapshot, uniformTypeIdentifier: "public.plain-text")
+        attachment.name = "URL-iOS-预览原始字节"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        app.buttons["exportURL"].tap()
+        finishSave(app, suffix: "url-export")
+    }
+
+    @MainActor
     func testYAMLSaveSuccess() throws {
         let app = launch()
         openExampleDetails(app)
@@ -221,14 +312,14 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "Glass-iOS-RTLJSON")
     }
 
-    private enum Format: String { case qr = "二维码", yaml = "Clash YAML", json = "Shadowrocket JSON" }
+    private enum Format: String { case qr = "二维码", yaml = "Clash YAML", json = "Shadowrocket JSON", url = "Shadowrocket URL" }
 
     @MainActor
     private func select(_ format: Format, app: XCUIApplication) {
         let picker = app.descendants(matching: .any)["outputPicker"].firstMatch
         scrollTo(picker, app: app)
         let full = app.buttons[format.rawValue].firstMatch
-        let short = app.buttons[format == .json ? "JSON" : format == .yaml ? "YAML" : "二维码"].firstMatch
+        let short = app.buttons[format == .url ? "URL" : format == .json ? "JSON" : format == .yaml ? "YAML" : "二维码"].firstMatch
         if full.isHittable { full.tap() }
         else if short.isHittable { short.tap() }
         else {
@@ -236,7 +327,7 @@ final class ProxyStudioUITests: XCTestCase {
             XCTAssertTrue(full.waitForExistence(timeout: 5))
             full.tap()
         }
-        XCTAssertTrue(app.buttons[format == .qr ? "exportPNG" : format == .yaml ? "exportYAML" : "exportJSON"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[format == .url ? "exportURL" : format == .qr ? "exportPNG" : format == .yaml ? "exportYAML" : "exportJSON"].waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -269,8 +360,13 @@ final class ProxyStudioUITests: XCTestCase {
     private func setUDP(_ app: XCUIApplication) {
         let udp = app.switches["udpToggle"]
         scrollTo(udp, app: app)
-        let controlPosition = app.launchArguments.contains("-ProxyStudioRTL") ? 0.1 : 0.9
-        udp.coordinate(withNormalizedOffset: CGVector(dx: controlPosition, dy: 0.5)).tap()
+        guard udp.value as? String != "1" else { return }
+        udp.tap()
+        // 部分系统将标签和开关合并为同一辅助功能元素；默认命中点未切换时再点击控件一侧。
+        if udp.value as? String != "1" {
+            let controlPosition = app.launchArguments.contains("-ProxyStudioRTL") ? 0.1 : 0.9
+            udp.coordinate(withNormalizedOffset: CGVector(dx: controlPosition, dy: 0.5)).tap()
+        }
         XCTAssertEqual(udp.value as? String, "1")
     }
 

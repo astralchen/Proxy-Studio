@@ -98,6 +98,46 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertEqual(Data(try XCTUnwrap(preview.value as? String).utf8), snapshot)
     }
 
+    /// 通过原生面板写入文件并回读；只读目录检查实际文件写入失败。
+    @MainActor
+    func testURLActualSaveAndReadOnlyFailure() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ProxyStudioURLUITests-" + UUID().uuidString).path
+        let readOnly = directory + "/ReadOnly"
+        try FileManager.default.createDirectory(atPath: readOnly, withIntermediateDirectories: true)
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: readOnly)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: readOnly) }
+        let app = launch()
+        importExample(app)
+        app.typeKey("4", modifierFlags: .command)
+        app.switches["udpToggle"].click()
+        let preview = app.descendants(matching: .any)["urlPreview"]
+        let snapshot = Data(try XCTUnwrap(preview.value as? String).utf8)
+        let attachment = XCTAttachment(data: snapshot, uniformTypeIdentifier: "public.plain-text")
+        attachment.name = "Mac-URL-预览原始字节"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        saveText(app, identifier: "exportURL", directory: directory)
+        XCTAssertTrue(app.buttons["action-button-1"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@",
+                                                          "文件已保存。", "文件已保存。")).firstMatch.exists)
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: directory + "/shadowrocket.url")), snapshot)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: directory).sorted(), ["ReadOnly", "shadowrocket.url"])
+        XCTAssertFalse(snapshot.starts(with: [0xEF, 0xBB, 0xBF]))
+        XCTAssertFalse(snapshot.contains(10))
+        attach(app, "Mac-URL-实际保存成功")
+        app.buttons["action-button-1"].click()
+        saveText(app, identifier: "exportURL", directory: readOnly)
+        XCTAssertTrue(app.buttons["action-button-1"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@",
+                                                          "保存失败：", "保存失败：")).firstMatch.exists)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: readOnly + "/shadowrocket.url"))
+        attach(app, "Mac-URL-只读目录失败")
+        app.buttons["action-button-1"].click()
+        XCTAssertTrue(preview.exists)
+        XCTAssertEqual(Data(try XCTUnwrap(preview.value as? String).utf8), snapshot)
+    }
+
     /// 使用原生面板保存 YAML，逐字节验证视觉换行不影响输出。
     @MainActor
     func testYAMLActualSaveMatchesLivePreview() throws {
@@ -127,7 +167,12 @@ final class ProxyStudioMacUITests: XCTestCase {
 
     @MainActor
     private func saveJSON(_ app: XCUIApplication, directory: String) {
-        app.buttons["exportJSON"].click()
+        saveText(app, identifier: "exportJSON", directory: directory)
+    }
+
+    @MainActor
+    private func saveText(_ app: XCUIApplication, identifier: String, directory: String) {
+        app.buttons[identifier].click()
         XCTAssertTrue(app.buttons["OKButton"].waitForExistence(timeout: 5))
         app.typeKey("g", modifierFlags: [.command, .shift])
         let path = app.textFields["PathTextField"]
@@ -164,6 +209,39 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertTrue(preview.waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["action-button-1"].exists)
         XCTAssertEqual(try jsonObject(preview)["udp"] as? Int, 1)
+        app.typeKey(XCUIKeyboardKey.escape, modifierFlags: [])
+        XCTAssertTrue(app.buttons["exportPNG"].waitForExistence(timeout: 5))
+    }
+
+    /// URL 菜单和快捷键操作当前窗口，保存面板优先处理 Escape。
+    @MainActor
+    func testLiveURLCopyMenusSharedUDPAndEscape() throws {
+        let app = launch(appearance: "Light")
+        importExample(app)
+        app.menuBars.menuBarItems["节点"].click()
+        app.menuItems["显示 Shadowrocket URL"].click()
+        let preview = app.descendants(matching: .any)["urlPreview"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 5))
+        XCTAssertTrue((preview.value as? String)?.hasSuffix("&udp=0") == true)
+        app.switches["udpToggle"].click()
+        let snapshot = try XCTUnwrap(preview.value as? String)
+        XCTAssertTrue(snapshot.hasSuffix("&udp=1"))
+        app.buttons["copyOutput"].click()
+        XCTAssertEqual(NSPasteboard.general.string(forType: .string), snapshot)
+        app.typeKey("3", modifierFlags: .command)
+        XCTAssertEqual(try jsonObject(app.descendants(matching: .any)["jsonPreview"])["udp"] as? Int, 1)
+        app.typeKey("2", modifierFlags: .command)
+        XCTAssertTrue((app.descendants(matching: .any)["yamlPreview"].value as? String)?.contains("udp: true") == true)
+        app.typeKey("4", modifierFlags: .command)
+        XCTAssertEqual(preview.value as? String, snapshot)
+        app.menuBars.menuBarItems["节点"].click()
+        app.menuItems["导出 Shadowrocket URL…"].click()
+        XCTAssertTrue(app.buttons["CancelButton"].waitForExistence(timeout: 5))
+        app.typeKey(XCUIKeyboardKey.escape, modifierFlags: [])
+        XCTAssertTrue(app.buttons["CancelButton"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["action-button-1"].exists)
+        XCTAssertEqual(preview.value as? String, snapshot)
+        attach(app, "Mac-URL-浅色预览复制与取消")
         app.typeKey(XCUIKeyboardKey.escape, modifierFlags: [])
         XCTAssertTrue(app.buttons["exportPNG"].waitForExistence(timeout: 5))
     }
@@ -235,9 +313,10 @@ final class ProxyStudioMacUITests: XCTestCase {
     func testCancelPNGAndYAMLSave() {
         let app = launch()
         importExample(app)
-        for identifier in ["exportPNG", "exportYAML", "exportJSON"] {
+        for identifier in ["exportPNG", "exportYAML", "exportJSON", "exportURL"] {
             if identifier == "exportYAML" { app.typeKey("2", modifierFlags: .command) }
             if identifier == "exportJSON" { app.typeKey("3", modifierFlags: .command) }
+            if identifier == "exportURL" { app.typeKey("4", modifierFlags: .command) }
             app.buttons[identifier].click()
             XCTAssertTrue(app.buttons["CancelButton"].waitForExistence(timeout: 5))
             attach(app, "Mac-\(identifier)-保存面板")
@@ -274,7 +353,8 @@ final class ProxyStudioMacUITests: XCTestCase {
         app.buttons["togglePassword"].click()
         app.typeKey("2", modifierFlags: .command)
         app.switches["udpToggle"].click()
-        // 关闭系统输入法可能出现的短暂浮层，再恢复当前输出。
+        // 第一次 Escape 可能先返回二维码；第二次交给输入法关闭短暂浮层，再恢复当前输出。
+        app.typeKey(XCUIKeyboardKey.escape, modifierFlags: [])
         app.typeKey(XCUIKeyboardKey.escape, modifierFlags: [])
         app.typeKey("2", modifierFlags: .command)
         let window = app.windows.firstMatch
@@ -313,6 +393,16 @@ final class ProxyStudioMacUITests: XCTestCase {
             XCTAssertLessThanOrEqual(element.frame.maxX, window.frame.maxX)
         }
         attach(app, "Mac-最小窗口-JSON")
+        app.typeKey("4", modifierFlags: .command)
+        XCTAssertTrue((app.descendants(matching: .any)["urlPreview"].value as? String)?.hasSuffix("&udp=1") == true)
+        XCTAssertTrue(app.buttons["exportURL"].isHittable)
+        XCTAssertTrue(app.buttons["copyOutput"].isHittable)
+        for identifier in ["urlPreview", "exportURL", "outputPicker"] {
+            let element = app.descendants(matching: .any)[identifier]
+            XCTAssertGreaterThanOrEqual(element.frame.minX, window.frame.minX)
+            XCTAssertLessThanOrEqual(element.frame.maxX, window.frame.maxX)
+        }
+        attach(app, "Mac-最小窗口-URL")
         app.typeKey("2", modifierFlags: .command)
         app.buttons["隐藏边栏"].click()
         XCTAssertTrue(app.buttons["显示边栏"].waitForExistence(timeout: 5))

@@ -35,6 +35,9 @@ struct ProxyCommands: Commands {
             Button("显示 Shadowrocket JSON") { session?.output = .json }
                 .keyboardShortcut("3")
                 .disabled(session?.canUseOutput != true)
+            Button("显示 Shadowrocket URL") { session?.output = .url }
+                .keyboardShortcut("4")
+                .disabled(session?.canUseOutput != true)
             // 与当前窗口键盘适配共用返回二维码的操作。
             Button("返回二维码") { session?.output = .qr }
                 .keyboardShortcut(.escape, modifiers: [])
@@ -45,6 +48,8 @@ struct ProxyCommands: Commands {
             Button("导出 Clash 配置…") { session?.exportYAML() }
                 .disabled(session?.canUseOutput != true)
             Button("导出 Shadowrocket JSON…") { session?.exportJSON() }
+                .disabled(session?.canUseOutput != true)
+            Button("导出 Shadowrocket URL…") { session?.exportURL() }
                 .disabled(session?.canUseOutput != true)
         }
     }

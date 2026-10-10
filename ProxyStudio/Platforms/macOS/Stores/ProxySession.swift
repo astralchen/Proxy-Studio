@@ -40,7 +40,7 @@ final class ProxySession {
     private(set) var qrImage: QRCodeImage?
     /// 是否显示密码；切换节点后重置。
     var revealPassword = false
-    /// 二维码、JSON 与 Clash 共用的 UDP 选项；新节点使用链接中的初始值。
+    /// 二维码、URL、JSON 与 Clash 共用的 UDP 选项；新节点使用链接中的初始值。
     var udpEnabled = false {
         didSet {
             guard udpEnabled != oldValue else { return }
@@ -126,17 +126,17 @@ final class ProxySession {
     /// 当前输出可保存；二维码及 JSON 生成失败不影响其他格式。
     var canExportCurrent: Bool {
         guard canUseOutput else { return false }
-        switch output { case .qr: return qrImage != nil; case .yaml: return true; case .json: return jsonData != nil }
+        switch output { case .qr: return qrImage != nil; case .yaml, .url: return true; case .json: return jsonData != nil }
     }
 
     /// 当前文本格式的原始内容；二维码没有文本复制操作。
     var outputText: String? {
-        switch output { case .qr: nil; case .yaml: yaml; case .json: json }
+        switch output { case .qr: nil; case .yaml: yaml; case .json: json; case .url: node == nil ? nil : shareLink }
     }
 
     /// 使用当前格式捕获快照并打开系统面板。
     func exportCurrent() {
-        switch output { case .qr: exportPNG(); case .yaml: exportYAML(); case .json: exportJSON() }
+        switch output { case .qr: exportPNG(); case .yaml: exportYAML(); case .json: exportJSON(); case .url: exportURL() }
     }
 
     /// 捕获当前 YAML 的字节快照并打开系统保存面板。
@@ -153,6 +153,12 @@ final class ProxySession {
             return
         }
         prepareExport(data: data, type: .json, name: "shadowrocket.json")
+    }
+
+    /// 捕获当前导入链接的 UTF-8 字节快照，不添加 BOM 或末尾换行。
+    func exportURL() {
+        guard canUseOutput else { return }
+        prepareExport(data: Data(shareLink.utf8), type: ExportDocument.shadowrocketURLType, name: "shadowrocket.url")
     }
 
     /// 编码当前二维码，成功后打开系统保存面板。
