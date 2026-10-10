@@ -6,6 +6,8 @@ import UniformTypeIdentifiers
 /// 文档按原样保存字节，不解析链接、YAML 或 JSON，也不对图片进行重新编码。
 /// 调用方应确保传给文件导出器的内容类型与 `data` 的实际格式一致。
 struct ExportDocument: FileDocument {
+    // MARK: - 内容类型与原始字节
+
     /// Shadowrocket 链接文件的内容类型；无法识别扩展名时使用不附加文本扩展名的数据类型。
     static var shadowrocketURLType: UTType { UTType(filenameExtension: "url") ?? .data }
 
@@ -13,8 +15,10 @@ struct ExportDocument: FileDocument {
     static var readableContentTypes: [UTType] {
         [.data, .plainText, .png, .json, UTType(filenameExtension: "yaml") ?? .plainText, shadowrocketURLType]
     }
-    /// 文档的完整内容。
+    /// 文档的完整内容；导出前由会话捕获，后续预览更新不改变该快照。
     var data: Data
+
+    // MARK: - 文档读写
 
     /// 使用已编码的文件内容创建文档。
     ///

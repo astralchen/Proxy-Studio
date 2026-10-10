@@ -5,10 +5,14 @@ import Foundation
 /// 配置包含节点、“代理选择”策略组和匹配全部流量的规则。
 /// 本类型只生成配置文本，不启动代理服务，也不检查服务端的 UDP 支持情况。
 struct ClashConfiguration: Sendable {
+    // MARK: - 配置输入
+
     /// 要写入配置的代理节点。
     var node: ProxyNode
     /// 是否在节点配置中启用 UDP。默认值为 `false`。
     var udpEnabled = false
+
+    // MARK: - YAML 编码
 
     /// 将字符串编码为可直接嵌入 YAML 的双引号标量。
     ///

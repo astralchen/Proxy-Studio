@@ -3,9 +3,12 @@ import SwiftUI
 
 /// 原生 Mac 工作区。根视图持有独立会话，子视图只编辑该会话。
 struct ContentView: View {
+    /// 当前窗口独有的内存会话，供导入栏、工作区和焦点菜单共用。
     @State private var session = ProxySession()
+    /// 当前窗口的分栏可见性，默认显示全部栏目；隐藏侧栏不清除会话。
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
+    /// 构建分栏、原生工具栏、保存面板与导出提示，并向当前场景发布会话。
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             ImportView(session: session)
@@ -64,6 +67,7 @@ struct ContentView: View {
             }
         }
         .task(id: session.copyFeedback) {
+            // 任务随反馈变化重建；取消的旧任务不能清除新反馈。
             guard session.copyFeedback != nil else { return }
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }

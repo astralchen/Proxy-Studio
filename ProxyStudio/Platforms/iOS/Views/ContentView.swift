@@ -9,7 +9,9 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     /// 会话由根视图持有，返回与布局变化不会重建输出状态。
     @State private var session = ProxySession()
+    /// 输入控件的编辑焦点；解析操作会主动结束编辑。
     @FocusState private var isEditing: Bool
+    /// 紧凑布局优先显示的栏目；初始为导入栏，解析成功后切换到详情栏。
     @State private var compactColumn: NavigationSplitViewColumn = .sidebar
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -135,10 +137,12 @@ struct ContentView: View {
         .background(WorkspaceStyle.surface, in: RoundedRectangle(cornerRadius: 24))
     }
 
+    /// 导入卡片的标题，供横向和辅助功能字号的纵向布局共用。
     private var importHeading: some View {
         Label("导入节点", systemImage: "link").font(.headline)
     }
 
+    /// 用户主动触发的系统粘贴入口；多个字符串只取第一条，导出期间禁用。
     private var pasteButton: some View {
         PasteButton(payloadType: String.self) { strings in
             if let first = strings.first { session.input = first }

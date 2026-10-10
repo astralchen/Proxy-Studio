@@ -165,11 +165,18 @@ final class ProxyStudioMacUITests: XCTestCase {
         attach(app, "Glass-Mac-YAML实际保存")
     }
 
+    /// 通过原生保存面板将 JSON 保存到指定目录，结果提示由调用方检查。
     @MainActor
     private func saveJSON(_ app: XCUIApplication, directory: String) {
         saveText(app, identifier: "exportJSON", directory: directory)
     }
 
+    /// 打开指定格式的保存面板，使用“前往文件夹”定位目录并提交保存。
+    /// - Parameters:
+    ///   - app: 当前运行的被测应用。
+    ///   - identifier: 导出按钮的辅助功能标识。
+    ///   - directory: 测试专用目录的完整路径。
+    /// - Note: 点击保存不代表写入完成，调用方需等待结果并回读文件。
     @MainActor
     private func saveText(_ app: XCUIApplication, identifier: String, directory: String) {
         app.buttons[identifier].click()
@@ -186,6 +193,7 @@ final class ProxyStudioMacUITests: XCTestCase {
         app.buttons["OKButton"].click()
     }
 
+    /// 验证 JSON/YAML 共享 UDP、UUID 稳定，以及 Escape 先取消保存、再返回二维码。
     @MainActor
     func testLiveJSONSharedUDPAndEscape() throws {
         let app = launch()
@@ -246,12 +254,17 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertTrue(app.buttons["exportPNG"].waitForExistence(timeout: 5))
     }
 
+    /// 独立解析预览的原始辅助功能文本，并要求顶层为 JSON 对象。
+    /// - Parameter preview: 当前 JSON 预览控件。
+    /// - Returns: 解析后的字段字典。
+    /// - Throws: 文本解包、JSON 解析或顶层类型检查失败时产生测试错误。
     @MainActor
     private func jsonObject(_ preview: XCUIElement) throws -> [String: Any] {
         let text = try XCTUnwrap(preview.value as? String)
         return try XCTUnwrap(JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any])
     }
 
+    /// 验证示例导入、密码显示、即时 YAML 及 Escape 返回后详情选项保留。
     @MainActor
     func testImportPasswordAndLiveYAML() {
         let app = launch()
@@ -272,6 +285,7 @@ final class ProxyStudioMacUITests: XCTestCase {
         attach(app, "Mac-二维码")
     }
 
+    /// 验证编辑无效输入后旧输出失效，解析报错，清空快捷键恢复空输入。
     @MainActor
     func testEditingInvalidatesNodeAndKeyboardClear() {
         let app = launch()
@@ -289,6 +303,7 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertFalse(app.buttons["parseButton"].isEnabled)
     }
 
+    /// 验证 Cmd-N 创建空会话，原窗口的输入、YAML 和 UDP 状态仍保留。
     @MainActor
     func testNewWindowIsIndependent() {
         let app = launch()
@@ -309,6 +324,7 @@ final class ProxyStudioMacUITests: XCTestCase {
         attach(app, "Mac-独立多窗口")
     }
 
+    /// 逐一取消 PNG、YAML、JSON、URL 的原生保存面板，验证无提示且节点仍可操作。
     @MainActor
     func testCancelPNGAndYAMLSave() {
         let app = launch()
@@ -461,6 +477,9 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertEqual(field.value as? String, directory)
     }
 
+    /// 使用指定外观和中文界面启动应用，并将首个窗口移到便于测试的位置。
+    /// - Parameter appearance: Debug 外观参数，默认 `Dark`。
+    /// - Returns: 已启动且导入入口存在的应用实例。
     @MainActor
     private func launch(appearance: String = "Dark") -> XCUIApplication {
         continueAfterFailure = false
@@ -481,6 +500,7 @@ final class ProxyStudioMacUITests: XCTestCase {
         return app
     }
 
+    /// 填入虚构示例，通过 Cmd-Return 解析并等待节点 UDP 开关出现。
     @MainActor
     private func importExample(_ app: XCUIApplication) {
         app.buttons["试用示例节点"].click()
@@ -488,6 +508,7 @@ final class ProxyStudioMacUITests: XCTestCase {
         XCTAssertTrue(app.switches["udpToggle"].waitForExistence(timeout: 5))
     }
 
+    /// 激活被测应用，逐窗口保存截图附件；遮挡与外观需人工复核。
     @MainActor
     private func attach(_ app: XCUIApplication, _ name: String) {
         // 先激活被测应用再截窗口边界；附件仍需人工检查是否被其他窗口遮挡。

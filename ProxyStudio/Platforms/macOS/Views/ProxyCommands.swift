@@ -1,12 +1,15 @@
 import SwiftUI
 
-/// 当前拥有焦点的 Mac 窗口会话。
+/// 将当前场景的窗口会话接入 SwiftUI 焦点值系统的键。
 private struct ProxySessionKey: FocusedValueKey {
+    /// 焦点值保存窗口会话对象，由根视图通过 `focusedSceneValue` 发布。
     typealias Value = ProxySession
 }
 
 extension FocusedValues {
-    /// 菜单操作只访问当前窗口，不共享各窗口的节点。
+    /// 当前场景发布的窗口会话；没有相应焦点值时为 `nil`。
+    ///
+    /// 菜单操作由此路由到当前窗口，各窗口节点及导出状态独立。
     var proxySession: ProxySession? {
         get { self[ProxySessionKey.self] }
         set { self[ProxySessionKey.self] = newValue }
@@ -15,8 +18,10 @@ extension FocusedValues {
 
 /// 提供与当前窗口按钮一致的菜单操作和快捷键。
 struct ProxyCommands: Commands {
+    /// 当前获得焦点的会话；无会话时菜单操作禁用。
     @FocusedValue(\.proxySession) private var session
 
+    /// 创建解析、清空、四种输出切换及导出命令，复用会话的操作可用性。
     var body: some Commands {
         CommandMenu("节点") {
             Button("解析链接") { session?.parse() }

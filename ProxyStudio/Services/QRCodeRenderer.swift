@@ -13,7 +13,7 @@ enum QRCodeRenderer {
     /// 使用 UTF-8 编码和 H 级纠错，与 Shadowrocket 导出样本一致。每个模块按 10 倍整数比例放大，
     /// 四周额外保留四个模块宽的白色静区，导出的 PNG 也包含该区域。
     ///
-    /// - Parameter text: 要编码的完整文本。
+    /// - Parameter text: 要编码的完整文本，通常为当前 UDP 选项对应的规范化分享链接。
     /// - Returns: 生成的二维码；滤镜无法编码输入或渲染失败时返回 `nil`。
     static func image(for text: String) -> QRCodeImage? {
         let filter = CIFilter.qrCodeGenerator()

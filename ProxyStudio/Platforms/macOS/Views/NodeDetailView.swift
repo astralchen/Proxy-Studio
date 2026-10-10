@@ -2,9 +2,12 @@ import SwiftUI
 
 /// 桌面输出工作区。预览随当前节点与 UDP 选项即时更新。
 struct NodeDetailView: View {
+    /// 所属窗口的会话；保存面板显示期间禁用详情和格式编辑。
     @Bindable var session: ProxySession
+    /// 当前成功解析的节点，与会话中的即时预览配套显示。
     let node: ProxyNode
 
+    /// 按详情列可用宽度布局摘要与预览，内容宽度最多为 1000 pt。
     var body: some View {
         GeometryReader { geometry in
             ScrollView {

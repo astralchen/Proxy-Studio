@@ -150,7 +150,7 @@ final class ProxyNodeTests: XCTestCase {
         XCTAssertEqual(cgImage.width, image.cgImage.width)
     }
 
-    /// 验证实际编码 PNG 的四边均保留四模块（40 像素）白色静区。
+    /// 验证实际编码 PNG 的四边至少保留四模块（40 像素）不透明白色静区。
     @MainActor
     func testPNGQuietZone() throws {
         let image = try XCTUnwrap(QRCodeRenderer.image(for: ProxyNode.exampleLink))

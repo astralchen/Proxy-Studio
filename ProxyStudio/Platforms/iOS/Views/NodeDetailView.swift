@@ -3,10 +3,15 @@ import UIKit
 
 /// 即时输出工作区；导航返回不会清除根视图持有的会话。
 struct NodeDetailView: View {
+    /// 根视图持有的窗口会话，详情、输出及导出操作均写回该对象。
     @Bindable var session: ProxySession
+    /// 当前成功解析的节点，与会话中的实时输出配套显示。
     let node: ProxyNode
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// 是否显示图片与链接分享入口，默认不显示。
     @State private var showsShareOptions = false
+
+    // MARK: - 工作区布局
 
     var body: some View {
         VStack(spacing: 0) {
@@ -35,6 +40,7 @@ struct NodeDetailView: View {
                 .presentationCompactAdaptation(.popover)
         }
         .task(id: session.copyFeedback) {
+            // 反馈值变化或视图退出会取消旧任务，防止旧计时器清除后续反馈。
             guard session.copyFeedback != nil else { return }
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
@@ -42,6 +48,7 @@ struct NodeDetailView: View {
         }
     }
 
+    /// 位于滚动内容之外的操作区，宽度不足或辅助功能字号下改为纵向排列。
     private var actions: some View {
         VStack(spacing: 8) {
             if let feedback = session.copyFeedback {
@@ -61,6 +68,7 @@ struct NodeDetailView: View {
         .padding(.horizontal, 20).padding(.vertical, 12)
     }
 
+    /// 当前格式的保存及分享或复制按钮；复制使用原始文本，并播报完成反馈。
     @ViewBuilder
     private var buttons: some View {
         Button(session.output.exportTitle, systemImage: "square.and.arrow.down") { session.exportCurrent() }

@@ -4,9 +4,12 @@ import CoreFoundation
 
 /// 验证单节点 JSON 的字段、类型及确定性；所有凭据均为虚构数据。
 final class ShadowrocketConfigurationTests: XCTestCase {
+    /// 固定节点身份，避免随机 UUID 影响编码结果比较。
     private let identifier = UUID(uuidString: "00000000-0000-4000-8000-000000000001")!
+    /// 包含小数秒的固定时间，用于验证时间类型及权重的整数截取。
     private let createdAt = Date(timeIntervalSince1970: 1_791_426_634.125)
 
+    /// 验证完整的 41 键集合及字段类型，包括整数与布尔值的区别。
     func testCompleteObjectSchemaAndFieldTypes() throws {
         let node = try ProxyNode.parse(ProxyNode.exampleLink)
         let data = try configuration(node).encodedJSON()
@@ -42,6 +45,7 @@ final class ShadowrocketConfigurationTests: XCTestCase {
         XCTAssertEqual(object["uuid"] as? String, identifier.uuidString)
     }
 
+    /// 验证免认证节点、地址格式和端口边界，IPv6 输出不携带外层方括号。
     func testUnauthenticatedAddressesAndPortBoundaries() throws {
         for (link, host, port) in [("socks://192.0.2.1:1", "192.0.2.1", "1"),
                                   ("socks://proxy.example.com:65535", "proxy.example.com", "65535"),
@@ -54,6 +58,7 @@ final class ShadowrocketConfigurationTests: XCTestCase {
         }
     }
 
+    /// 验证中文、引号、反斜杠与特殊凭据经 JSON 编码后可完整还原。
     func testUnicodeAndCredentialEscapingRoundTrip() throws {
         let node = ProxyNode(name: "中文 \"节点\" / \\ DIRECT", host: "proxy.example.com", port: 1080,
                              username: "虚构\"用户\\", password: "示例:p@ss/\"\\🔑")
@@ -63,6 +68,7 @@ final class ShadowrocketConfigurationTests: XCTestCase {
         XCTAssertEqual(output["password"] as? String, node.password)
     }
 
+    /// 验证 UDP 使用整数 0/1，切换时保持 UUID、时间和权重。
     func testUDPUsesIntegersAndPreservesMetadata() throws {
         var config = configuration(try ProxyNode.parse(ProxyNode.exampleLink))
         let disabled = try object(config.encodedJSON())
@@ -75,6 +81,7 @@ final class ShadowrocketConfigurationTests: XCTestCase {
         }
     }
 
+    /// 验证相同输入的字节确定性、缩进、排序键、末尾换行及 JSON 文档类型。
     func testRepeatedEncodingIsStableAndFormatted() throws {
         let config = configuration(try ProxyNode.parse(ProxyNode.exampleLink))
         let first = try config.encodedJSON()
@@ -88,6 +95,7 @@ final class ShadowrocketConfigurationTests: XCTestCase {
         XCTAssertTrue(ExportDocument.readableContentTypes.contains(.json))
     }
 
+    /// 验证非有限、负值及超出整数范围的时间抛出错误，避免 weight 转换崩溃。
     func testInvalidTimestampThrowsWithoutIntegerConversionTrap() throws {
         let node = try ProxyNode.parse(ProxyNode.exampleLink)
         for value in [Double.nan, .infinity, -1, Double(Int.max)] {
@@ -97,10 +105,17 @@ final class ShadowrocketConfigurationTests: XCTestCase {
         }
     }
 
+    /// 使用固定 UUID 和时间创建配置，使重复编码结果可直接比较。
+    /// - Parameter node: 使用虚构凭据的测试节点。
+    /// - Returns: 默认关闭 UDP 的单节点配置。
     private func configuration(_ node: ProxyNode) -> ShadowrocketConfiguration {
         ShadowrocketConfiguration(node: node, identifier: identifier, createdAt: createdAt)
     }
 
+    /// 独立解析 JSON 并要求顶层为对象，用于检查编码器的输出契约。
+    /// - Parameter data: 待验证的 JSON 字节。
+    /// - Returns: 解析后的字段字典。
+    /// - Throws: JSON 无效或顶层类型不符合预期时产生测试错误。
     private func object(_ data: Data) throws -> [String: Any] {
         try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
     }

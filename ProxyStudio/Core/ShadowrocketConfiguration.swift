@@ -5,6 +5,8 @@ import Foundation
 /// 字段及类型遵循单节点导出格式。身份与时间由调用方持有，重复编码不生成新元数据。
 /// 本类型只生成文件内容，不连接代理服务器，也不推断地区或测速结果。
 struct ShadowrocketConfiguration: Sendable {
+    // MARK: - 节点与元数据
+
     /// 要导出的代理节点。
     let node: ProxyNode
     /// 是否启用 UDP。默认值为 `false`。
@@ -14,6 +16,8 @@ struct ShadowrocketConfiguration: Sendable {
     /// 当前节点成功解析的时间，同时用作初始创建和更新时间。
     let createdAt: Date
 
+    // MARK: - JSON 编码
+
     /// 编码一个包含 41 个字段的 JSON 对象。
     ///
     /// - Returns: UTF-8 JSON，包含缩进、排序键和末尾换行。
@@ -21,6 +25,7 @@ struct ShadowrocketConfiguration: Sendable {
     /// - Important: 返回的数据以明文包含节点的账号和密码。
     func encodedJSON() throws -> Data {
         let timestamp = createdAt.timeIntervalSince1970
+        // weight 需要转换为 Int，先拒绝非有限值及越界时间，避免整数转换触发运行时错误。
         guard timestamp.isFinite, timestamp >= 0, timestamp < Double(Int.max) else {
             throw EncodingError.invalidValue(createdAt, .init(codingPath: [], debugDescription: "节点时间无法编码。"))
         }
@@ -37,7 +42,13 @@ struct ShadowrocketConfiguration: Sendable {
         return data
     }
 
-    /// 明确声明单节点格式中的字段类型；未使用的协议选项保留为空字符串。
+    // MARK: - 文件格式契约
+
+    /// 明确声明单节点格式中的字段类型和默认值。
+    ///
+    /// SOCKS5 未使用的协议选项保留为空字符串，`obfs` 与 `proto` 使用 `none`。
+    /// `port` 为字符串，`udp`、`ping`、`weight` 为整数，两个时间字段为 Unix 秒数。
+    /// 属性名直接用作 JSON 键，新增或重命名属性时需同步核对单节点格式契约。
     private struct Record: Encodable {
         let host: String
         let obfsParam = ""

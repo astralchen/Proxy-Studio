@@ -2,9 +2,12 @@ import SwiftUI
 
 /// 可滚动的桌面导入栏，使用系统文本编辑器保留标准编辑操作。
 struct ImportView: View {
+    /// 所属窗口的会话；编辑不同文本会立即使旧输出失效。
     @Bindable var session: ProxySession
+    /// 系统文本编辑器的焦点，点击解析时结束编辑。
     @FocusState private var isEditing: Bool
 
+    /// 按侧栏可用宽度布局输入、错误及解析结果，允许竖向滚动。
     var body: some View {
         GeometryReader { geometry in
             ScrollView {

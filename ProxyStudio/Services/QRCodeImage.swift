@@ -7,7 +7,9 @@ struct QRCodeImage {
     /// 可用于 SwiftUI、UIKit、AppKit 和 Vision 的共享像素。
     let cgImage: CGImage
 
-    /// 将像素编码为 PNG；无法创建或完成编码器时返回 `nil`。
+    /// 将共享像素按原始尺寸编码为 PNG。
+    ///
+    /// - Returns: 包含二维码及白色静区的 PNG 字节；无法创建或完成编码器时为 `nil`。
     func pngData() -> Data? {
         let data = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil) else {

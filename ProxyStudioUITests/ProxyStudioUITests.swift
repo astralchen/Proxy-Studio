@@ -51,6 +51,7 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "Glass-iOS-二维码工作区像素")
     }
 
+    /// 验证 JSON/YAML 共享 UDP、节点 UUID 稳定，以及系统保存取消不产生提示。
     @MainActor
     func testJSONPreviewSharedUDPAndCancelExport() throws {
         let app = launch()
@@ -73,6 +74,7 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "Glass-iOS-JSON")
     }
 
+    /// 验证 URL、JSON、YAML 共享 UDP，URL 保存取消后原文与节点身份保留。
     @MainActor
     func testURLPreviewSharedUDPAndCancelExport() throws {
         let app = launch()
@@ -101,6 +103,7 @@ final class ProxyStudioUITests: XCTestCase {
         XCTAssertEqual(try jsonObject(app.staticTexts["jsonPreview"])["uuid"] as? String, original["uuid"] as? String)
     }
 
+    /// 验证返回导入栏后 JSON 和详情选项保留，并用主动粘贴核对复制原文。
     @MainActor
     func testBackNavigationPreservesOptionsAndCopyUsesOriginalText() throws {
         let app = launch()
@@ -139,6 +142,7 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "Glass-iOS-复制与输入失效")
     }
 
+    /// 验证返回导入栏后 URL 和详情选项保留，复制内容不含视觉换行。
     @MainActor
     func testURLBackNavigationAndCopyUsesOriginalText() throws {
         let app = launch()
@@ -177,6 +181,7 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "URL-iOS-复制与输入失效")
     }
 
+    /// 验证最大辅助功能字号下 JSON 预览存在，导出与复制操作可点击。
     @MainActor
     func testJSONPreviewAtAccessibilityTextSize() {
         let app = launch(large: true)
@@ -188,6 +193,7 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "Glass-iOS-辅助功能JSON")
     }
 
+    /// 验证最大辅助功能字号下 URL 预览存在，导出与复制操作可点击。
     @MainActor
     func testURLPreviewAtAccessibilityTextSize() {
         let app = launch(large: true)
@@ -199,6 +205,7 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "URL-iOS-辅助功能URL")
     }
 
+    /// 验证最大辅助功能字号下可滚动到详情开关，密码及 PNG 保存操作可点击。
     @MainActor
     func testAccessibilityTextSize() {
         let app = launch(large: true)
@@ -211,6 +218,9 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "Glass-iOS-辅助功能二维码")
     }
 
+    /// 验证导入、详情展开、旋转请求后的 YAML 操作水平范围及保存取消。
+    ///
+    /// - Note: 发送 landscapeLeft 不代表模拟器实际进入横屏；真实姿态仍需单独确认。
     @MainActor
     func testImportPreviewAndRotate() throws {
         let app = launch()
@@ -234,6 +244,9 @@ final class ProxyStudioUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
     }
 
+    /// 使用深色启动参数验证图片和链接分享入口，并确认系统图片分享面板出现。
+    ///
+    /// - Note: 外观由截图复核，本用例不向外部目标发送内容。
     @MainActor
     func testDarkAppearanceAndShareMenu() {
         let app = launch(dark: true)
@@ -248,6 +261,9 @@ final class ProxyStudioUITests: XCTestCase {
         attach(app, "Glass-iOS-深色分享面板")
     }
 
+    /// 启用 UDP 后通过系统面板保存 PNG，并等待应用的保存成功提示。
+    ///
+    /// - Note: PNG 文件和载荷需单独回读，本用例不自行检查保存字节。
     @MainActor
     func testShadowrocketPNGSaveWithUDP() throws {
         let app = launch()
@@ -257,6 +273,7 @@ final class ProxyStudioUITests: XCTestCase {
         finishSave(app, suffix: "glass-png")
     }
 
+    /// 保存 JSON 预览原始字节附件，并等待系统保存完成提示；实际文件需另行回读比较。
     @MainActor
     func testJSONSaveSuccess() throws {
         let app = launch()
@@ -271,6 +288,7 @@ final class ProxyStudioUITests: XCTestCase {
         finishSave(app, suffix: "glass-json")
     }
 
+    /// 保存 URL 预览原始字节附件，并等待系统保存完成提示；实际文件需另行回读比较。
     @MainActor
     func testURLSaveSuccess() throws {
         let app = launch()
@@ -285,6 +303,7 @@ final class ProxyStudioUITests: XCTestCase {
         finishSave(app, suffix: "url-export")
     }
 
+    /// 保存启用 UDP 的 YAML 原始字节附件，并等待保存成功提示；实际文件需另行回读。
     @MainActor
     func testYAMLSaveSuccess() throws {
         let app = launch()
@@ -300,6 +319,7 @@ final class ProxyStudioUITests: XCTestCase {
         finishSave(app, suffix: "glass-yaml")
     }
 
+    /// 在强制语义 RTL 下验证即时 JSON 与操作可达性，镜像布局通过截图单独复核。
     @MainActor
     func testRTLWorkspaceAndLiveJSON() throws {
         let app = launch(rtl: true)
@@ -314,6 +334,10 @@ final class ProxyStudioUITests: XCTestCase {
 
     private enum Format: String { case qr = "二维码", yaml = "Clash YAML", json = "Shadowrocket JSON", url = "Shadowrocket URL" }
 
+    /// 在完整标签、短标签或菜单中选择格式，并等待对应导出按钮出现。
+    /// - Parameters:
+    ///   - format: 要切换到的测试输出格式。
+    ///   - app: 当前运行的被测应用。
     @MainActor
     private func select(_ format: Format, app: XCUIApplication) {
         let picker = app.descendants(matching: .any)["outputPicker"].firstMatch
@@ -330,6 +354,12 @@ final class ProxyStudioUITests: XCTestCase {
         XCTAssertTrue(app.buttons[format == .url ? "exportURL" : format == .qr ? "exportPNG" : format == .yaml ? "exportYAML" : "exportJSON"].waitForExistence(timeout: 5))
     }
 
+    /// 以固定竖屏基线和指定字号、外观、语义方向启动被测应用。
+    /// - Parameters:
+    ///   - large: 是否使用最大辅助功能字号，默认 `false`。
+    ///   - dark: 是否使用深色外观，默认 `false`。
+    ///   - rtl: 是否传入 RTL 测试参数，默认 `false`。
+    /// - Returns: 已启动的应用实例。
     @MainActor
     private func launch(large: Bool = false, dark: Bool = false, rtl: Bool = false) -> XCUIApplication {
         continueAfterFailure = false
@@ -343,6 +373,7 @@ final class ProxyStudioUITests: XCTestCase {
         return app
     }
 
+    /// 填入虚构示例并解析，确认无需点击结果卡片即可进入输出工作区。
     @MainActor
     private func openExampleDetails(_ app: XCUIApplication) {
         let sample = app.buttons["试用示例节点"]
@@ -356,6 +387,7 @@ final class ProxyStudioUITests: XCTestCase {
         XCTAssertTrue(app.switches["udpToggle"].exists)
     }
 
+    /// 将 UDP 置为开启，并断言实际开关值；已开启时不重复切换。
     @MainActor
     private func setUDP(_ app: XCUIApplication) {
         let udp = app.switches["udpToggle"]
@@ -370,6 +402,11 @@ final class ProxyStudioUITests: XCTestCase {
         XCTAssertEqual(udp.value as? String, "1")
     }
 
+    /// 在指定栏目中双向滚动，优先要求目标完整进入视口；尝试结束后断言可点击。
+    /// - Parameters:
+    ///   - element: 要滚动到的目标控件。
+    ///   - app: 当前运行的被测应用。
+    ///   - isImport: 为 `true` 时滚动导入栏，否则滚动详情栏，默认 `false`。
     @MainActor
     private func scrollTo(_ element: XCUIElement, app: XCUIApplication, isImport: Bool = false) {
         let container = app.scrollViews[isImport ? "importScroll" : "nodeDetails"].firstMatch
@@ -389,14 +426,20 @@ final class ProxyStudioUITests: XCTestCase {
         XCTAssertTrue(element.isHittable)
     }
 
+    /// 读取控件的原始字符串值；没有字符串值时使用辅助功能标签。
     @MainActor
     private func text(_ element: XCUIElement) -> String { element.value as? String ?? element.label }
 
+    /// 独立解析 JSON 预览的辅助功能文本，并要求顶层为对象。
+    /// - Parameter element: 提供原始 JSON 文本的控件。
+    /// - Returns: 解析后的 JSON 字段字典。
+    /// - Throws: 解析或类型解包失败时产生测试错误。
     @MainActor
     private func jsonObject(_ element: XCUIElement) throws -> [String: Any] {
         try XCTUnwrap(JSONSerialization.jsonObject(with: Data(text(element).utf8)) as? [String: Any])
     }
 
+    /// 按稳定标识或已观察到的中文名称查询系统保存按钮，不在此处等待其出现。
     @MainActor
     private func saveButton(_ app: XCUIApplication) -> XCUIElement {
         app.buttons.matching(NSPredicate(format: "identifier == %@ OR label == %@", "DOCPicker.actionButton", "保存")).firstMatch
@@ -414,6 +457,10 @@ final class ProxyStudioUITests: XCTestCase {
         }
     }
 
+    /// 处理系统保存操作，并等待“文件已保存。”提示；不替代文件字节回读。
+    /// - Parameters:
+    ///   - app: 当前运行的被测应用。
+    ///   - suffix: 附加到建议文件名的测试标记，后续追加短 UUID 以降低重名概率。
     @MainActor
     private func finishSave(_ app: XCUIApplication, suffix: String) {
         let save = saveButton(app)
@@ -445,6 +492,7 @@ final class ProxyStudioUITests: XCTestCase {
         return false
     }
 
+    /// 将当前应用的截图保存为长期保留的 XCTest 附件，供独立视觉复核。
     @MainActor
     private func attach(_ app: XCUIApplication, _ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())

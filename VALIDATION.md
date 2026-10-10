@@ -341,3 +341,33 @@ Duo 重启后的批次完成 27 单元及 7 UI，其中 6 UI 通过、PNG 1 项�
 本轮截图为 `Preview/shadowrocket-url-duo.png`、`Preview/shadowrocket-url-ipad.png` 和 `Preview/shadowrocket-url-mac.png`，来自实际 XCTest 附件；使用虚构示例节点，URL 视觉换行不改变复制或保存字节。
 
 本轮最终 `git diff --check` 通过；源文件哈希快照为 `source-snapshot.json`。未将真实附件、诊断或构建产物纳入仓库。
+
+## 2026-10-10 — 双平台中文代码注释
+
+本轮为当前 21 个应用源码文件和 6 个测试文件添加或更新中文注释，沿用 UIKit SDK 风格的 `///`、参数 / 返回值 / 错误说明和 `// MARK: -` 分组。重点覆盖四种输出格式、窗口会话状态与稳定元数据、导出字节快照、共享工作区布局、原生分享及 Escape 监听生命周期。URL 导出说明修正为当前规范化分享链接，测试注释区分回调模拟、实际文件回读、截图复核和旋转请求的验证边界。
+
+修改前快照取自本轮开始时的工作区，包含当时已有的未提交功能及测试改动。逐文件比较确认本轮仅修改整行注释和空行，所有非注释代码行（含字符串常量）与该快照一致。原有 README、REQUIREMENTS 及截图改动保留，本轮仅向本验证记录追加结果。
+
+| 检查 | 状态 | 本次证据与边界 |
+| --- | --- | --- |
+| 注释改动范围与代码一致性 | 通过 | 27 个 Swift 文件逐项比较，排除整行注释和空行后完全一致；`.build/validation/comments-20261010/comment-only-check.json` 保存最终源码 SHA-256，`comments-only.diff` 保存相对本轮开始快照的注释差异 |
+| iOS 应用及测试目标编译 | 通过 | Xcode 27.1（27A9269），`ProxyStudio` / generic iOS Simulator / Debug / `CODE_SIGNING_ALLOWED=NO`；`ios-build-verified.log` 为 `TEST BUILD SUCCEEDED`，退出 0 |
+| Mac 应用及测试目标编译 | 通过 | 同一 Xcode，`ProxyStudioMac` / platform=macOS / Debug / `CODE_SIGNING_ALLOWED=NO`；`mac-build-verified.log` 为 `TEST BUILD SUCCEEDED`，退出 0 |
+| 同步目录与平台源码归属 | 通过 | 审查两平台应用及测试目标共 12 份 arm64 / x86_64 `*.SwiftFileList`，iOS 不包含 macOS 目录，Mac 不包含 iOS 目录；`source-membership.json` 保存清单路径与源码数量 |
+| 工程格式及差异检查 | 通过 | `plutil -lint ProxyStudio.xcodeproj/project.pbxproj`、`git diff --check` |
+| 首轮受限沙箱编译 | 被环境阻塞 | 两平台均出现 `sandbox-exec: sandbox_apply: Operation not permitted`，随后 Swift 宏插件加载失败，命令退出 65；`ios-build.log`、`mac-build.log` 保留原始诊断。获准在沙箱外重试后，两平台最终编译通过 |
+| 单元测试、UI 测试执行及实际运行交互 | 未执行 | 本轮只改注释，执行 `build-for-testing` 验证编译；未运行测试用例，也不将编译成功作为保存、分享或布局的交互通过证据 |
+
+证据统一保存在被忽略的 `.build/validation/comments-20261010/`。最终编译保留现有 Vision 回读测试使用较早 revision / CPU 选项的弃用警告，以及未依赖 AppIntents 的元数据提取提示；本轮没有修改这些实现。
+
+复现最终编译命令：
+
+```sh
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudio \
+  -configuration Debug -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath .build/comments-ios CODE_SIGNING_ALLOWED=NO build-for-testing
+xcodebuild -project ProxyStudio.xcodeproj -scheme ProxyStudioMac \
+  -configuration Debug -destination 'platform=macOS' \
+  -derivedDataPath .build/comments-mac CODE_SIGNING_ALLOWED=NO build-for-testing
+```

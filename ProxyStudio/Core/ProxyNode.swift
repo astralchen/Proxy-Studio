@@ -142,7 +142,10 @@ struct ProxyNode: Equatable, Sendable {
                          host: host, port: port, username: username, password: password, udpEnabled: udp == "1")
     }
 
-    /// 兼容标准与 URL 安全 Base64 字母表，以及省略填充字符的输入。
+    /// 使用标准或 URL 安全 Base64 字母表解码 UTF-8 文本。
+    ///
+    /// - Parameter text: 可省略末尾填充字符的 Base64 文本。
+    /// - Returns: 解码后的文本；Base64 无效或字节不是有效 UTF-8 时为 `nil`。
     private static func decodeBase64(_ text: String) -> String? {
         var encoded = text.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         encoded += String(repeating: "=", count: (4 - encoded.count % 4) % 4)
@@ -156,7 +159,7 @@ struct ProxyNode: Equatable, Sendable {
     ///
     /// 错误说明可直接显示在导入界面中；说明文本不包含输入链接或认证信息。
     enum ParseError: LocalizedError {
-        // 依次表示空输入、输入过长、协议、地址、端口、认证、附加选项和名称错误。
+        /// 输入为空、超过字节上限，或协议、地址、端口、认证、附加选项、名称不受支持。
         case empty, tooLong, scheme, address, port, credentials, unsupportedOptions, name
 
         /// 面向用户的中文错误说明。

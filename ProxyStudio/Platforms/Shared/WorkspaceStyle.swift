@@ -2,9 +2,13 @@ import SwiftUI
 
 /// 两平台共用的冰青视觉语义；内容底色不依赖玻璃采样。
 enum WorkspaceStyle {
+    /// 工作区整体底色，随资源中的浅色与深色外观切换。
     static let background = Color("WorkspaceBackground")
+    /// 输入卡片、节点摘要及文本预览的稳定内容底色。
     static let surface = Color("WorkspaceSurface")
+    /// 应用控件的主题色，以及说明区域渐变使用的颜色。
     static let accent = Color("AccentColor")
+    /// 图标和次要操作文字使用的强调色。
     static let foregroundAccent = Color("WorkspaceAccent")
 }
 
@@ -42,8 +46,11 @@ struct WorkspaceEmptyView: View {
     }
 }
 
-/// 按实际控件固有宽度选择完整标签、短标签或菜单。
+/// 按可用宽度选择完整标签、短标签或菜单的输出格式控件。
+///
+/// 辅助功能字号直接使用菜单；各布局编辑同一绑定，并保留格式的完整辅助功能名称。
 struct OutputPicker: View {
+    /// 当前格式，由所属窗口会话持有；切换布局不会创建新的选择状态。
     @Binding var selection: OutputFormat
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -62,6 +69,9 @@ struct OutputPicker: View {
         .accessibilityIdentifier("outputPicker")
     }
 
+    /// 创建分段选择器，使用固有宽度参与 `ViewThatFits` 的布局选择。
+    /// - Parameter compact: 为 `true` 时使用简写标题，否则使用完整标题。
+    /// - Returns: 与 `selection` 绑定的分段选择器。
     private func picker(compact: Bool) -> some View {
         Picker("输出格式", selection: $selection) {
             ForEach(OutputFormat.allCases) { output in
@@ -72,6 +82,7 @@ struct OutputPicker: View {
         .pickerStyle(.segmented).labelsHidden()
     }
 
+    /// 窄容器或辅助功能字号下的菜单，当前值仍以完整名称供辅助功能读取。
     private var menu: some View {
         Menu {
             Picker("输出格式", selection: $selection) {
@@ -94,9 +105,15 @@ struct OutputPicker: View {
 
 /// 常驻摘要与可展开的完整字段。显示状态由窗口会话持有。
 struct NodeSummary: View {
+    // MARK: - 节点与窗口绑定
+
+    /// 当前节点；只读取字段，UDP 导出选项由独立绑定控制。
     let node: ProxyNode
+    /// 是否展开完整字段；初始值由窗口会话决定。
     @Binding var isExpanded: Bool
+    /// 是否显示原始密码；收起详情不改变此选项。
     @Binding var revealPassword: Bool
+    /// 四种输出共用的 UDP 选项，不表示已检查服务器能力。
     @Binding var udpEnabled: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -133,6 +150,8 @@ struct NodeSummary: View {
         .background(WorkspaceStyle.surface, in: RoundedRectangle(cornerRadius: 24))
     }
 
+    // MARK: - 字段布局
+
     /// 辅助功能字号使用上下排列，让长值获得完整可用宽度。
     private var stackedFields: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -155,6 +174,12 @@ struct NodeSummary: View {
         }
     }
 
+    /// 创建标签在上、可选择值在下的字段，供辅助功能字号布局使用。
+    /// - Parameters:
+    ///   - title: 字段名称。
+    ///   - text: 原始显示值。
+    ///   - identifier: 值视图的辅助功能标识，默认为空字符串。
+    /// - Returns: 按可用宽度换行的字段视图。
     private func stackedField(_ title: String, text: String, identifier: String = "") -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.caption).foregroundStyle(.secondary)
@@ -162,6 +187,7 @@ struct NodeSummary: View {
         }
     }
 
+    /// 标准字号的共享标签列和值列；首行基线对齐，长值按列宽换行。
     private var fields: some View {
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 12) {
             GridRow(alignment: .firstTextBaseline) {
@@ -192,6 +218,9 @@ struct NodeSummary: View {
         .font(.subheadline)
     }
 
+    /// 创建可选择且保留完整高度的值文本。
+    /// - Parameter text: 要显示的原始文本，不插入额外换行字符。
+    /// - Returns: 填充值列宽度、沿语义起始边对齐的文本。
     private func value(_ text: String) -> some View {
         Text(text).textSelection(.enabled)
             .fixedSize(horizontal: false, vertical: true)
@@ -201,13 +230,23 @@ struct NodeSummary: View {
 
 /// 当前格式的即时预览。视觉换行不改变底层文本或导出字节。
 struct OutputPreview: View {
+    // MARK: - 预览输入
+
+    /// 当前要呈现的格式；本视图不修改窗口选择。
     let output: OutputFormat
+    /// 用于二维码辅助功能说明的节点名称。
     let nodeName: String
+    /// 已渲染的共享二维码像素；为 `nil` 时在二维码格式下显示失败说明。
     let image: QRCodeImage?
+    /// 原始 Clash 配置，由调用方生成。
     let yaml: String
+    /// 原始 Shadowrocket JSON；为 `nil` 时在 JSON 格式下显示失败说明。
     let json: String?
+    /// 当前规范化分享链接，与二维码载荷一致。
     let url: String
-    /// 显示宽度上限；窄容器按内容宽度缩小，滚动位置不影响尺寸，原始 PNG 像素不变。
+    /// 二维码显示宽度上限，默认 320 pt；窄容器按内容宽度缩小。
+    ///
+    /// 滚动位置和可用高度不参与尺寸计算，原始 PNG 像素不变。
     var qrMaximumDimension: CGFloat = 320
 
     var body: some View {
@@ -248,6 +287,11 @@ struct OutputPreview: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// 显示可选择的等宽正文，并通过辅助功能提供未添加视觉换行的完整文本。
+    /// - Parameters:
+    ///   - text: 调用方生成的原始链接或配置。
+    ///   - identifier: 当前格式预览的辅助功能标识。
+    /// - Returns: 按可用宽度换行、保持协议正文从左到右阅读的文本视图。
     private func textPreview(_ text: String, identifier: String) -> some View {
         Text(text).font(.system(.callout, design: .monospaced))
             .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)

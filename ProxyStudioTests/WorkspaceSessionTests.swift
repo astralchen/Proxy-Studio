@@ -5,6 +5,7 @@ import ImageIO
 
 /// 两端会话均遵循导航保留、即时输出与不可变导出契约。
 final class WorkspaceSessionTests: XCTestCase {
+    /// 验证同一会话的格式与详情切换保留元数据和选项；不模拟真实导航交互。
     @MainActor
     func testOutputAndDetailsChangesPreserveIdentityAndOptions() throws {
         let session = ProxySession()
@@ -30,6 +31,7 @@ final class WorkspaceSessionTests: XCTestCase {
         XCTAssertEqual(returnedSession.output, .json)
     }
 
+    /// 验证编辑立即清除旧输出，新节点解析成功后重置详情及输出格式。
     @MainActor
     func testEditingClearsOldOutputAndNewNodeResetsPresentation() throws {
         let session = ProxySession()
@@ -54,6 +56,7 @@ final class WorkspaceSessionTests: XCTestCase {
         XCTAssertFalse(session.udpEnabled)
     }
 
+    /// 验证复制源为原始 JSON/YAML，UDP 即时同步且不刷新节点身份。
     @MainActor
     func testCurrentTextIsOriginalAndUDPUpdatesBothFormats() throws {
         let session = ProxySession()
@@ -74,6 +77,7 @@ final class WorkspaceSessionTests: XCTestCase {
         XCTAssertNil(session.outputText)
     }
 
+    /// 验证三种文本导出在选项变化后保留原始字节，取消后释放快照及导出限制。
     @MainActor
     func testCurrentExportCapturesTextSnapshotsBeforeChanges() throws {
         let session = ProxySession()
@@ -146,6 +150,9 @@ final class WorkspaceSessionTests: XCTestCase {
         }
     }
 
+    /// 验证 URL 导出可用性、模拟保存结果和两个会话的独立性。
+    ///
+    /// - Note: 完成回调由测试构造，不代表执行了系统保存面板或实际文件写入。
     @MainActor
     func testURLExportAvailabilityResultsAndIndependentWindows() throws {
         let first = ProxySession()
@@ -229,6 +236,7 @@ final class WorkspaceSessionTests: XCTestCase {
         XCTAssertNil(session.message)
     }
 
+    /// 验证无效输入恢复与保存成功、失败、取消的回调提示；不执行实际文件写入。
     @MainActor
     func testSaveResultsAndInvalidInputRecovery() {
         let session = ProxySession()

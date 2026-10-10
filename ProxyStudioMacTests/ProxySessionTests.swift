@@ -38,6 +38,10 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertFalse(session.udpEnabled)
     }
 
+    /// 通过 ImageIO 和 Vision 独立回读 PNG 中的二维码载荷。
+    /// - Parameter data: 已编码的 PNG 字节。
+    /// - Returns: 检测到的首个二维码文本。
+    /// - Throws: 图片解码、条码检测或载荷解包失败时产生测试错误。
     @MainActor
     private func decodePNG(_ data: Data) throws -> String {
         let source = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
@@ -50,6 +54,7 @@ final class ProxySessionTests: XCTestCase {
         return try XCTUnwrap(request.results?.first?.payloadStringValue)
     }
 
+    /// 验证重复解析和格式切换保持 JSON 元数据，输入变更后生成新的节点身份。
     @MainActor
     func testJSONMetadataIsStableUntilNodeChanges() throws {
         let session = ProxySession()
@@ -72,6 +77,7 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertEqual(session.output, .qr)
     }
 
+    /// 验证 JSON/YAML 共用 UDP，而两个窗口会话的节点、格式及清空操作独立。
     @MainActor
     func testJSONAndYAMLShareUDPAndWindowsRemainIndependent() throws {
         let first = ProxySession()
@@ -95,6 +101,7 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertNotNil(second.jsonData)
     }
 
+    /// 验证 JSON 保存快照不随 UDP 更新，并在取消后保留节点与显示选项。
     @MainActor
     func testJSONSnapshotAndCancellationPreserveSession() throws {
         let session = ProxySession()
@@ -122,6 +129,7 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertEqual(session.output, .json)
     }
 
+    /// 验证 JSON 导出入口与模拟成功、写入失败及取消回调的反馈；不写入文件。
     @MainActor
     func testJSONSaveSuccessFailureAndUserCancelledFeedback() {
         let session = ProxySession()
@@ -143,6 +151,7 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertNil(session.exportDocument)
     }
 
+    /// 验证不同输入立即使旧节点和错误失效，空输入禁用解析。
     @MainActor
     func testEditingInvalidatesNodeAndError() {
         let session = ProxySession()
@@ -159,6 +168,7 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertFalse(session.canParse)
     }
 
+    /// 验证格式切换保留密码与 UDP，新节点恢复其初始选项和二维码格式。
     @MainActor
     func testNodeChangeResetsOptionsButLayoutSelectionDoesNot() {
         let session = ProxySession()
@@ -178,6 +188,7 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertEqual(session.output, .qr)
     }
 
+    /// 验证清空一个会话不会改变另一个会话的输入、节点和显示选项。
     @MainActor
     func testIndependentWindowsAndClear() {
         let first = ProxySession()
@@ -199,6 +210,7 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertFalse(second.canClear)
     }
 
+    /// 验证 YAML 导出快照、导出期间的操作禁用及取消后的选项保留。
     @MainActor
     func testYAMLExportSnapshotAndCancellationPreserveOptions() throws {
         let session = ProxySession()
@@ -226,6 +238,7 @@ final class ProxySessionTests: XCTestCase {
         XCTAssertEqual(session.output, .yaml)
     }
 
+    /// 验证 PNG 文件签名及内容类型，并模拟用户取消错误；不执行系统面板交互。
     @MainActor
     func testPNGExportAndUserCancelledError() {
         let session = ProxySession()
